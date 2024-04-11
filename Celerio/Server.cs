@@ -15,16 +15,9 @@ public class Server
         Logging.Log($"Server Started At localhost:{port}");
         while (true)
         {
-            try
-            {
-                var a = await socket.AcceptAsync();
-                Logging.Log($"Processing Request From {a.RemoteEndPoint}");
-                new Thread(() => pipeline.ProcessRequest(new NetworkStream(a))).Start();
-            }
-            catch (Exception e)
-            {
-                Logging.Err(e.Message);
-            }
+            var a = await socket.AcceptAsync();
+            Logging.Log($"Processing Request From {a.RemoteEndPoint}");
+            new Thread(() => pipeline.ProcessRequest(new NetworkStream(a))).Start();
         }
     }
 

@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio", "Celerio\Celerio.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelerioSamples", "CelerioSamples\CelerioSamples.csproj", "{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelerioTests", "CelerioTests\CelerioTests.csproj", "{2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -46,11 +46,14 @@ public class HttpResponse
 
 public interface IHTTPProvider
 {
+    public string ErrorMessage { get; }
     public bool GetRequest(Stream stream, out HttpRequest request);
     public void SendResponse(Stream stream, HttpResponse response);
 }
 public class HTTP11ProtocolProvider : IHTTPProvider
 {
+    public string ErrorMessage { get; } = "HTTP/1.1 400 Protocol Not Supported";
+    
     public bool GetRequest(Stream stream, out HttpRequest request)
     {
         string uri = "";
@@ -62,7 +65,7 @@ public class HTTP11ProtocolProvider : IHTTPProvider
             var l = reader.ReadLine();
             if (l == null)
                 break;
-
+            
             if (pointer == 0)
             {
                 var p = l.Split(' ');
@@ -89,9 +92,9 @@ public class HTTP11ProtocolProvider : IHTTPProvider
             pointer += l.Length + 1;
         }
         
-        
         if (request.Headers.TryGetValue("Content-Length", out var contentLength)&&int.TryParse(contentLength, out var length))
         {
+            stream.Position -= length;
             byte[] buffer = new byte[length];
             stream.Read(buffer, 0, length);
             request.Body = Encoding.UTF8.GetString(buffer);
@@ -112,6 +115,10 @@ public class HTTP11ProtocolProvider : IHTTPProvider
                 request.Query.Add(p[0], p[1]);
             }
         }
+
+        if (request.Method == "" || request.URI == "")
+            return false;
+        
         return true;
     }
 
