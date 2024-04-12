@@ -176,4 +176,70 @@ public class Http11
         
         Assert.Pass();
     }
+    [Test]
+    public void Http11_Empty()
+    {
+        var provider = new HTTP11ProtocolProvider();
+        
+        Stream stream = new MemoryStream();
+        
+        var success = provider.GetRequest(stream, out var request);
+        Assert.IsFalse(success);
+        
+        Assert.Pass();
+    }
+    [Test]
+    public void Http11_NewLine_1()
+    {
+        var provider = new HTTP11ProtocolProvider();
+        
+        Stream stream = new MemoryStream();
+        StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
+        
+        writer.Write("\r\n");
+        writer.Flush();
+        
+        stream.Position = 0;
+        
+        var success = provider.GetRequest(stream, out var request);
+        Assert.IsFalse(success);
+        
+        Assert.Pass();
+    }
+    [Test]
+    public void Http11_NewLine_2()
+    {
+        var provider = new HTTP11ProtocolProvider();
+        
+        Stream stream = new MemoryStream();
+        StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
+        
+        writer.Write("\r\n\r\n");
+        writer.Flush();
+        
+        stream.Position = 0;
+        
+        var success = provider.GetRequest(stream, out var request);
+        Assert.IsFalse(success);
+        
+        Assert.Pass();
+    }
+    [Test]
+    public void Http11_NewLine_3()
+    {
+        var provider = new HTTP11ProtocolProvider();
+        
+        Stream stream = new MemoryStream();
+        StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
+        
+        writer.Write("\r\n\r\n\r\n");
+        writer.Flush();
+        
+        stream.Position = 0;
+        
+        var success = provider.GetRequest(stream, out var request);
+        Assert.IsFalse(success);
+        
+        Assert.Pass();
+    }
 }
