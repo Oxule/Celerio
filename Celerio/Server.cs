@@ -5,7 +5,7 @@ namespace Celerio;
 
 public class Server
 {
-    private IPipeline pipeline { get; }
+    private Pipeline pipeline { get; } = new();
 
     public async Task StartListening(int port)
     {
@@ -19,10 +19,5 @@ public class Server
             Logging.Log($"Processing Request From {a.RemoteEndPoint}");
             new Thread(() => pipeline.ProcessRequest(new NetworkStream(a))).Start();
         }
-    }
-
-    public Server(IPipeline pipeline)
-    {
-        this.pipeline = pipeline;
     }
 }

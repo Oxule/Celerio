@@ -2,31 +2,16 @@
 
 namespace Celerio;
 
-public interface IPipeline
-{
-    public void ProcessRequest(Stream stream);
-}
-
-public class Pipeline : IPipeline
+public class Pipeline
 {
     public IHTTPProvider HttpProvider = new HTTP11ProtocolProvider();
     
+    public EndpointRouter EndpointRouter = new EndpointRouter();
     
-    public delegate bool BeforeRouteMethod(HttpRequest request, out HttpResponse response);
-    public List<BeforeRouteMethod> BeforeRoute = new List<BeforeRouteMethod>();
-    
-    //1.Message Parsing
-    //2.RoutingBefore[]
-    //2.Routing
-    //3.Authorization
-    //5.EndpointBefore[]
-    //4.Endpoint Execution
-
     public void ProcessRequest(Stream stream)
     {
         try
         {
-            //PARSING
             if (!HttpProvider.GetRequest(stream, out var request))
             {
                 Logging.Warn("Error While Parsing Protocol. Disconnecting...");
@@ -47,13 +32,11 @@ public class Pipeline : IPipeline
 
     public HttpResponse PipelineExecution(HttpRequest request)
     {
-        foreach (var method in BeforeRoute)
-            if (!method.Invoke(request, out var response))
-                return response;
+        var ep = EndpointRouter.GetRoute(request);
+
+        if(ep == null)
+            return new HttpResponse(404, "Not Found", new Dictionary<string, string>(), "Not Found");
         
-        
-        var r = HttpResponse.Ok("<h1>Hello, World!</h1><h2>I'm Oxule!!!</h2>");
-        r.Headers["Content-Type"] = "text/html";
-        return r;
+        return ep.Method.Invoke(request);
     }
 }

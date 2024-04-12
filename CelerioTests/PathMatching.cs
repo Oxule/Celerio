@@ -7,7 +7,7 @@ public class PathMatching
     [Test]
     public void Match_OK_NoParams_Root()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsTrue(matcher.Match("/", "/", out var parameters));
     }
@@ -15,7 +15,7 @@ public class PathMatching
     [Test]
     public void Match_OK_NoParams_Directory()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsTrue(matcher.Match("/test", "/test", out var parameters));
     }
@@ -23,7 +23,7 @@ public class PathMatching
     [Test]
     public void Match_OK_NoParams_DeepPath()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsTrue(matcher.Match("/test/test2/555", "/test/test2/555", out var parameters));
     }
@@ -31,7 +31,7 @@ public class PathMatching
     [Test]
     public void Match_OK_Params_1()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsTrue(matcher.Match("/params/321", "/params/{test}", out var parameters));
         
@@ -40,7 +40,7 @@ public class PathMatching
     [Test]
     public void Match_OK_Params_3()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsTrue(matcher.Match("/params/321/page/4/test", "/params/{test}/page/{page}/{a}", out var parameters));
         
@@ -53,7 +53,7 @@ public class PathMatching
     [Test]
     public void Match_OK_NoClosingBackslash()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsTrue(matcher.Match("/Test", "/Test", out var parameters1));
         Assert.IsTrue(matcher.Match("/Test/", "/Test", out var parameters2));
@@ -65,7 +65,7 @@ public class PathMatching
     [Test]
     public void Match_Wrong_NoOpeningBackslash()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsFalse(matcher.Match("Test", "/Test", out var parameters1));
         Assert.IsFalse(matcher.Match("/Test", "Test", out var parameters2));
@@ -75,7 +75,7 @@ public class PathMatching
     [Test]
     public void Match_Wrong()
     {
-        EndpointRouter.PathMatcher matcher = new EndpointRouter.PathMatcher();
+        PathMatcher matcher = new PathMatcher();
         
         Assert.IsFalse(matcher.Match("/api/", "/test", out var parameters1));
         
