@@ -8,6 +8,8 @@ public class Pipeline
     
     public EndpointRouter EndpointRouter = new EndpointRouter();
     
+    public MethodInvoke MethodInvoke = new MethodInvoke();
+    
     public void ProcessRequest(Stream stream)
     {
         try
@@ -21,7 +23,18 @@ public class Pipeline
                 return;
             }
             Logging.Log($"Request Parsed Successfully: {request.Method} {request.URI}");
-            HttpProvider.SendResponse(stream, PipelineExecution(request));
+            HttpResponse resp;
+            try
+            {
+                resp = PipelineExecution(request);
+                HttpProvider.SendResponse(stream, resp);
+            }
+            catch (Exception e)
+            {
+                resp = new HttpResponse(500, "Internal Server Error", new Dictionary<string, string>(), e.Message);
+                HttpProvider.SendResponse(stream, resp);
+                Logging.Err(e.Message + '\n' + e.StackTrace);
+            }
         }
         catch (Exception e)
         {
@@ -32,11 +45,11 @@ public class Pipeline
 
     public HttpResponse PipelineExecution(HttpRequest request)
     {
-        var ep = EndpointRouter.GetRoute(request);
+        var ep = EndpointRouter.GetEndpoint(request, out var parameters);
 
         if(ep == null)
             return new HttpResponse(404, "Not Found", new Dictionary<string, string>(), "Not Found");
         
-        return ep.Method.Invoke(request);
+        return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters);
     }
 }

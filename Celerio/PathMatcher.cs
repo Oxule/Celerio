@@ -1,11 +1,6 @@
 ﻿namespace Celerio;
 
-public interface IPathMatcher
-{
-    public bool Match(string path, string pattern, out Dictionary<string, string> parameters);
-}
-
-public class PathMatcher : IPathMatcher
+public class PathMatcher
 { 
     public bool Match(string path, string pattern, out Dictionary<string, string> parameters)
     {
