@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace Celerio;
 
@@ -15,13 +16,13 @@ public class Pipeline
         try
         {
             if (!HttpProvider.GetRequest(stream, out var request))
-            {
-                Logging.Warn("Error While Parsing Protocol. Disconnecting...");
-                stream.Write(Encoding.UTF8.GetBytes(HttpProvider.ErrorMessage));
-                stream.Flush();
-                stream.Close();
-                return;
-            }
+                {
+                    Logging.Warn("Error While Parsing Protocol. Disconnecting...");
+                    stream.Write(Encoding.UTF8.GetBytes(HttpProvider.ErrorMessage));
+                    stream.Flush();
+                    stream.Close();
+                    return;
+                }
             Logging.Log($"Request Parsed Successfully: {request.Method} {request.URI}");
             HttpResponse resp;
             try
@@ -32,7 +33,7 @@ public class Pipeline
             catch (Exception e)
             {
                 resp = new HttpResponse(500, "Internal Server Error", new Dictionary<string, string>(), e.Message);
-                HttpProvider.SendResponse(stream, resp);
+                HttpProvider.SendResponse(stream, resp); 
                 Logging.Err(e.Message + '\n' + e.StackTrace);
             }
         }
@@ -49,6 +50,8 @@ public class Pipeline
 
         if(ep == null)
             return new HttpResponse(404, "Not Found", new Dictionary<string, string>(), "Not Found");
+        
+        
         
         return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters);
     }

@@ -69,6 +69,8 @@ public class EndpointRouter
         {
             foreach (var r in ep.Routes)
             {
+                if(request.Method != ep.HttpMethod)
+                    continue;
                 if(PathMatcher.Match(request.URI, r, out parameters))
                     return ep;
             }

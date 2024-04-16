@@ -8,9 +8,9 @@ public class HttpRequest
     public string URI { get; set; }
     public Dictionary<string, string> Query { get; set; }
     public Dictionary<string, string> Headers { get; set; }
-    public string Body { get; set; }
+    public string? Body { get; set; }
 
-    public HttpRequest(string method, string uri, Dictionary<string, string> query, Dictionary<string, string> headers, string body)
+    public HttpRequest(string method, string uri, Dictionary<string, string> query, Dictionary<string, string> headers, string? body)
     {
         Method = method;
         URI = uri;
@@ -58,11 +58,10 @@ public class HTTP11ProtocolProvider : IHTTPProvider
     {
         string uri = "";
         request = new HttpRequest();
-        var reader = new StreamReader(stream, Encoding.UTF8);
         int pointer = 0;
         while (true)
         {
-            var l = reader.ReadLine();
+            var l = ReadLineStream(stream);
             if (l == null)
                 break;
             
@@ -94,9 +93,9 @@ public class HTTP11ProtocolProvider : IHTTPProvider
         
         if (request.Headers.TryGetValue("Content-Length", out var contentLength)&&int.TryParse(contentLength, out var length))
         {
-            stream.Position -= length;
             byte[] buffer = new byte[length];
-            stream.Read(buffer, 0, length);
+            if (stream.Read(buffer, 0, length) != length)
+                return false;
             request.Body = Encoding.UTF8.GetString(buffer);
         }
 
@@ -122,12 +121,30 @@ public class HTTP11ProtocolProvider : IHTTPProvider
         return true;
     }
 
+    private static string? ReadLineStream(Stream stream)
+    {
+        List<byte> buffer = new List<byte>();
+        while (true)
+        {
+            var b = stream.ReadByte();
+            if (b == -1)
+                return null;
+            if (b == 10)
+            {
+                break;
+            }
+            buffer.Add((byte)b);
+        }
+        
+        return Encoding.UTF8.GetString(buffer.ToArray()).Trim();
+    }
+    
     private void DefaultHeaders(HttpResponse resp)
     {
         List<KeyValuePair<string, string>> headers = new List<KeyValuePair<string, string>>()
         {
-            new ("Server", "Celerio"),
-            new ("Connection", "keep-alive"),
+            new ("Server", "Celerio/1.0"),
+            new ("Connection", "close"),
             new ("Date", DateTime.Now.ToString("r")),
         };
 
@@ -140,14 +157,15 @@ public class HTTP11ProtocolProvider : IHTTPProvider
     
     public void SendResponse(Stream stream, HttpResponse response)
     {
+        var body = Encoding.UTF8.GetBytes(response.Body);
         DefaultHeaders(response); 
         if (!response.Headers.ContainsKey("Content-Length"))
-            response.Headers.Add("Content-Length", response.Body.Length.ToString());
+            response.Headers.Add("Content-Length", body.Length.ToString());
         
         if (!response.Headers.ContainsKey("Content-Type"))
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
         
-        var writer = new StreamWriter(stream, Encoding.UTF8);
+        var writer = new StreamWriter(stream);
         writer.WriteLine($"HTTP/1.1 {response.StatusCode} {response.StatusMessage}");
         foreach (var header in response.Headers)
         {

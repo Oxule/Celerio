@@ -27,7 +27,7 @@ public class PathMatcher
                     string param_name = pattern_parts[i].Substring(1, pattern_parts[i].Length-2);
                     parameters.Add(param_name, path_parts[i]);
                 }
-                else
+                else 
                     return false;
             }
                     
