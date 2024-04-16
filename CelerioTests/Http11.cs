@@ -8,7 +8,7 @@ public class Http11
     [Test]
     public void Http11_OK()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -33,7 +33,7 @@ public class Http11
     [Test]
     public void Http11_WrongMeta_NoRoute()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -51,7 +51,7 @@ public class Http11
     [Test]
     public void Http11_WrongMeta_NoVersion()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -69,7 +69,7 @@ public class Http11
     [Test]
     public void Http11_WrongMeta_WrongVersion()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -87,7 +87,7 @@ public class Http11
     [Test]
     public void Http11_WrongMeta_NoMethod()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -105,7 +105,7 @@ public class Http11
     [Test]
     public void Http11_WrongMeta_NoMeta()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -124,7 +124,7 @@ public class Http11
     [Test]
     public void Http11_WrongHeaders_NoSplitter()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -142,7 +142,7 @@ public class Http11
     [Test]
     public void Http11_WrongBody_LengthNotSpecified()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -161,7 +161,7 @@ public class Http11
     [Test]
     public void Http11_WrongBody_NoBodySplitter()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -179,7 +179,7 @@ public class Http11
     [Test]
     public void Http11_Empty()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         
@@ -191,7 +191,7 @@ public class Http11
     [Test]
     public void Http11_NewLine_1()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -209,7 +209,7 @@ public class Http11
     [Test]
     public void Http11_NewLine_2()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
@@ -227,7 +227,7 @@ public class Http11
     [Test]
     public void Http11_NewLine_3()
     {
-        var provider = new HTTP11ProtocolProvider();
+        var provider = new Http11ProtocolProvider();
         
         Stream stream = new MemoryStream();
         StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);

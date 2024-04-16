@@ -88,4 +88,13 @@ public class MethodInvoke
             return null;
         }
     }
+
+    public MethodInvoke(List<CustomDeserialize> customDeserialization)
+    {
+        CustomDeserialization = customDeserialization;
+    }
+
+    public MethodInvoke()
+    {
+    }
 }

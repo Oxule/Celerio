@@ -5,7 +5,7 @@ namespace Celerio;
 
 public class Pipeline
 {
-    public IHTTPProvider HttpProvider = new HTTP11ProtocolProvider();
+    public IHttpProvider HttpProvider = new Http11ProtocolProvider();
     
     public EndpointRouter EndpointRouter = new EndpointRouter();
     
@@ -16,25 +16,27 @@ public class Pipeline
         try
         {
             if (!HttpProvider.GetRequest(stream, out var request))
-                {
-                    Logging.Warn("Error While Parsing Protocol. Disconnecting...");
-                    stream.Write(Encoding.UTF8.GetBytes(HttpProvider.ErrorMessage));
-                    stream.Flush();
-                    stream.Close();
-                    return;
-                }
+            {
+                Logging.Warn("Error While Parsing Protocol. Disconnecting...");
+                stream.Write(Encoding.UTF8.GetBytes(HttpProvider.ErrorMessage));
+                stream.Flush();
+                stream.Close();
+                return;
+            }
             Logging.Log($"Request Parsed Successfully: {request.Method} {request.URI}");
             HttpResponse resp;
             try
             {
                 resp = PipelineExecution(request);
                 HttpProvider.SendResponse(stream, resp);
+                stream.Close();
             }
             catch (Exception e)
             {
                 resp = new HttpResponse(500, "Internal Server Error", new Dictionary<string, string>(), e.Message);
                 HttpProvider.SendResponse(stream, resp); 
                 Logging.Err(e.Message + '\n' + e.StackTrace);
+                stream.Close();
             }
         }
         catch (Exception e)

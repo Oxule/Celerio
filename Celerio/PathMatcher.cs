@@ -6,26 +6,26 @@ public class PathMatcher
     {
         parameters = new Dictionary<string, string>();
             
-        var pattern_parts = pattern.Split('/');
-        var path_parts = path.Split('/');
+        var patternParts = pattern.Split('/');
+        var pathParts = path.Split('/');
 
-        if (path_parts[0] != "" || pattern_parts[0] != "")
+        if (pathParts[0] != "" || patternParts[0] != "")
             return false;
             
-        int pattern_l = pattern_parts.Length - (pattern_parts[^1] == "" ? 1 : 0);
-        int path_l = path_parts.Length - (path_parts[^1] == "" ? 1 : 0);
+        int patternL = patternParts.Length - (patternParts[^1] == "" ? 1 : 0);
+        int pathL = pathParts.Length - (pathParts[^1] == "" ? 1 : 0);
             
-        if (pattern_l != path_l)
+        if (patternL != pathL)
             return false;
 
-        for (int i = 0; i < pattern_l; i++)
+        for (int i = 0; i < patternL; i++)
         {
-            if (path_parts[i] != pattern_parts[i])
+            if (pathParts[i] != patternParts[i])
             {
-                if (pattern_parts[i][0] == '{' && pattern_parts[i][^1] == '}')
+                if (patternParts[i][0] == '{' && patternParts[i][^1] == '}')
                 {
-                    string param_name = pattern_parts[i].Substring(1, pattern_parts[i].Length-2);
-                    parameters.Add(param_name, path_parts[i]);
+                    string paramName = patternParts[i].Substring(1, patternParts[i].Length-2);
+                    parameters.Add(paramName, pathParts[i]);
                 }
                 else 
                     return false;

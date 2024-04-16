@@ -31,7 +31,7 @@ public class EndpointRouter
             Info = info;
         }
     }
-    private List<Endpoint> endpoints = new List<Endpoint>();
+    private readonly List<Endpoint> _endpoints = new List<Endpoint>();
 
     private PathMatcher PathMatcher { get; } = new ();
     
@@ -54,7 +54,7 @@ public class EndpointRouter
                     
                     Logging.Log($"Found Endpoint: {attr.Method} {string.Join(" ", attr.URI)}");
 
-                    endpoints.Add(new Endpoint(attr.URI,
+                    _endpoints.Add(new Endpoint(attr.URI,
                         attr.Method,
                         method));
                 }
@@ -65,7 +65,7 @@ public class EndpointRouter
     public Endpoint? GetEndpoint(HttpRequest request, out Dictionary<string,string>? parameters)
     {
         parameters = null;
-        foreach (var ep in endpoints)
+        foreach (var ep in _endpoints)
         {
             foreach (var r in ep.Routes)
             {

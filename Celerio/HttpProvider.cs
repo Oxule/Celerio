@@ -44,13 +44,13 @@ public class HttpResponse
     public static HttpResponse Ok(string body) => new HttpResponse(200, "OK", new Dictionary<string, string>(), body);
 }
 
-public interface IHTTPProvider
+public interface IHttpProvider
 {
     public string ErrorMessage { get; }
     public bool GetRequest(Stream stream, out HttpRequest request);
     public void SendResponse(Stream stream, HttpResponse response);
 }
-public class HTTP11ProtocolProvider : IHTTPProvider
+public class Http11ProtocolProvider : IHttpProvider
 {
     public string ErrorMessage { get; } = "HTTP/1.1 400 Protocol Not Supported";
     
