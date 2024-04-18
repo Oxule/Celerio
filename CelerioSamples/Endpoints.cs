@@ -15,4 +15,34 @@ public static class Endpoints
     {
         return HttpResponse.Ok((a+b).ToString());
     }
+    
+    [Route("GET", "/calc/{method}/{a}/{b}", "/calc/{method}")]
+    public static HttpResponse Calc(int a, int b, string method)
+    {
+        switch (method)
+        {
+            case "add":
+                return HttpResponse.Ok((a+b).ToString());
+            case "sub":
+                return HttpResponse.Ok((a-b).ToString());
+            case "mul":
+                return HttpResponse.Ok((a*b).ToString());
+            case "div":
+                return HttpResponse.Ok((a/b).ToString());
+        }
+        return HttpResponse.Ok((a+b).ToString());
+    }
+    
+    [Route("GET", "/auth/{user}")]
+    public static HttpResponse Auth(string user, Pipeline pipeline)
+    {
+        return pipeline.Authentification.SendAuthentification(new Dictionary<string, string>() {{"user", user}});
+    }
+    
+    [Authentificated]
+    [Route("GET", "/auth")]
+    public static HttpResponse AuthCheck(Dictionary<string, string> auth)
+    {
+        return HttpResponse.Ok(auth["user"]);
+    }
 }
