@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Celerio;
 
-Server server = new Server();
+var pipeline = new Pipeline();
+Server server = new Server(pipeline);
 await server.StartListening(5000);
