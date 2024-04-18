@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Celerio;
@@ -19,10 +20,10 @@ public class DefaultAuthentification : IAuthentification
     public Dictionary<string, string>? Authentificate(HttpRequest request)
     {
         var a = Auth(request);
-        if (a == null || !a.TryGetValue("exp", out var expires) || !DateTime.TryParse(expires, out var exp) ||
-            exp <= DateTime.Now)
-            a = null;
-        return a;
+        if (a != null && a.TryGetValue("exp", out var expires) && DateTime.TryParseExact(expires, "yyyy-MM-dd HH-mm", null, DateTimeStyles.None, out var exp) && exp > DateTime.Now)
+            return a;
+        
+        return null;
     }
 
     private Dictionary<string, string>? Auth(HttpRequest request)
@@ -52,7 +53,7 @@ public class DefaultAuthentification : IAuthentification
 
     public string GenerateToken(Dictionary<string, string> credentials)
     {
-        credentials.Add("exp", DateTime.Now.Add(TokenExpiration).ToString("g"));
+        credentials.Add("exp", DateTime.Now.Add(TokenExpiration).ToString("yyyy-MM-dd HH-mm"));
         StringBuilder sb = new StringBuilder();
         foreach (var kvp in credentials)
         {
