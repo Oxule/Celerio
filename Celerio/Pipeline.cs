@@ -11,7 +11,7 @@ public class Pipeline
     
     public MethodInvoke MethodInvoke = new ();
     
-    public Authentification Authentification = new DefaultAuthentification();
+    public IAuthentification Authentification = new DefaultAuthentification();
     
     public void ProcessRequest(Stream stream)
     {

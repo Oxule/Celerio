@@ -29,15 +29,16 @@ public static class Endpoints
     }
     
     [Route("GET", "/auth")]
-    public static HttpResponse Auth(HttpRequest request)
+    public static HttpResponse AuthGet(Dictionary<string, string> auth)
     {
-        string hs = "";
-        foreach (var h in request.Headers)
-        {
-            hs += $"{h.Key}: {h.Value}\n";
-        }
-        var r = HttpResponse.Ok(hs);
-        r.Headers["Authorization"] = $"Bearer {DateTime.Now.Millisecond}";
-        return r;
+        if(auth == null)
+            return new HttpResponse(403, "Not Authorized", new Dictionary<string, string>(), "Not Authorized");
+        return HttpResponse.Ok(auth["name"]);
+    }
+    
+    [Route("POST", "/auth")]
+    public static HttpResponse AuthPost(Pipeline pipeline)
+    {
+        return HttpResponse.Ok(((DefaultAuthentification)pipeline.Authentification).GenerateToken(new Dictionary<string, string>(){{"name", "oxule"}}));
     }
 }
