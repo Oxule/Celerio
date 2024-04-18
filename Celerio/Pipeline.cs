@@ -7,9 +7,11 @@ public class Pipeline
 {
     public IHttpProvider HttpProvider = new Http11ProtocolProvider();
     
-    public EndpointRouter EndpointRouter = new EndpointRouter();
+    public EndpointRouter EndpointRouter = new ();
     
-    public MethodInvoke MethodInvoke = new MethodInvoke();
+    public MethodInvoke MethodInvoke = new ();
+    
+    public Authentification Authentification = new DefaultAuthentification();
     
     public void ProcessRequest(Stream stream)
     {
@@ -53,8 +55,8 @@ public class Pipeline
         if(ep == null)
             return new HttpResponse(404, "Not Found", new Dictionary<string, string>(), "Not Found");
         
+        var identity = Authentification.Authentificate(request);
         
-        
-        return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters);
+        return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), identity);
     }
 }
