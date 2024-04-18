@@ -28,21 +28,15 @@ public class DefaultAuthentification : IAuthentification
 
     private Dictionary<string, string>? Auth(HttpRequest request)
     {
-        if (!request.Headers.TryGetValue("Authorization", out var auth))
-            return null;
-        var p = auth.Split(' ');
-        if (p.Length != 2)
-            return null;
-        if (p[0].ToLower() != "bearer")
-            return null;
-        if (p[1] == "")
+        var auth = request.GetCookie("auth");
+        if (auth == null)
             return null;
         
-        var lines = Encoding.UTF8.GetString(Decrypt(Convert.FromBase64String(p[1]))).Split('\n');
+        var lines = Encoding.UTF8.GetString(Decrypt(Convert.FromBase64String(auth))).Split('\n');
         Dictionary<string, string> cred = new Dictionary<string, string>();
         foreach (var line in lines)
         {
-            p = line.Trim().Split(':');
+            var p = line.Trim().Split(':');
             if(p.Length!=2)
                 continue;
             cred.Add(p[0].ToLower(), p[1]);
