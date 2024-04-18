@@ -3,6 +3,12 @@ using System.Text;
 
 namespace Celerio;
 
+public interface IBeforeEndpoint
+{
+    public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
+        Dictionary<string, string> auth);
+}
+
 public class Pipeline
 {
     public IHttpProvider HttpProvider = new Http11ProtocolProvider();
@@ -13,8 +19,7 @@ public class Pipeline
     
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey", "SampleSalt");
     
-    public delegate HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> auth);
-    public List<BeforeEndpointHandler> BeforeEndpoint = new ();
+    public List<IBeforeEndpoint> BeforeEndpoint = new (){new AuthentificatedCheck()};
     
     public void ProcessRequest(Stream stream)
     {
@@ -62,7 +67,7 @@ public class Pipeline
 
         foreach (var handler in BeforeEndpoint)
         {
-            var resp = handler(request, ep, identity);
+            var resp = handler.BeforeEndpointHandler(request, ep, parameters, identity);
             if (resp != null)
                 return resp;
         }
