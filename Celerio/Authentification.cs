@@ -8,6 +8,7 @@ namespace Celerio;
 public interface IAuthentification
 {
     public Dictionary<string, string>? Authentificate(HttpRequest request);
+    public HttpResponse SendAuthentification(Dictionary<string, string> claims);
 }
 
 public class DefaultAuthentification : IAuthentification
@@ -43,16 +44,16 @@ public class DefaultAuthentification : IAuthentification
         return cred;
     }
 
-    public string GenerateToken(Dictionary<string, string> credentials)
+    public HttpResponse SendAuthentification(Dictionary<string, string> claims)
     {
-        credentials.Add("exp", DateTime.Now.Add(TokenExpiration).ToString("yyyy-MM-dd HH-mm"));
+        claims.Add("exp", DateTime.Now.Add(TokenExpiration).ToString("yyyy-MM-dd HH-mm"));
         StringBuilder sb = new StringBuilder();
-        foreach (var kvp in credentials)
+        foreach (var kvp in claims)
         {
             sb.AppendLine($"{kvp.Key}:{kvp.Value}");
         }
         var token = Convert.ToBase64String(Encrypt(Encoding.UTF8.GetBytes(sb.ToString())));
-        return token;
+        return new HttpResponse(200, "OK", new Dictionary<string, string>() {{"Set-Cookie", $"auth={token}"}}, "");
     }
 
     public byte[] Encrypt(byte[] data)
