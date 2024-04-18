@@ -6,7 +6,7 @@ namespace Celerio;
 
 public interface IAuthentification
 {
-    public MethodInvoke.InvokeOverride Authentificate(HttpRequest request);
+    public Dictionary<string, string>? Authentificate(HttpRequest request);
 }
 
 public class DefaultAuthentification : IAuthentification
@@ -16,13 +16,13 @@ public class DefaultAuthentification : IAuthentification
     private readonly Aes Aes;
     public TimeSpan TokenExpiration = TimeSpan.FromDays(24);
     
-    public MethodInvoke.InvokeOverride Authentificate(HttpRequest request)
+    public Dictionary<string, string>? Authentificate(HttpRequest request)
     {
         var a = Auth(request);
         if (a == null || !a.TryGetValue("exp", out var expires) || !DateTime.TryParse(expires, out var exp) ||
             exp <= DateTime.Now)
             a = null;
-        return new MethodInvoke.InvokeOverride(typeof(Dictionary<string, string>), a, "auth");
+        return a;
     }
 
     private Dictionary<string, string>? Auth(HttpRequest request)

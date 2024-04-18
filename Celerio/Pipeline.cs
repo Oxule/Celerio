@@ -13,6 +13,9 @@ public class Pipeline
     
     public IAuthentification Authentification = new DefaultAuthentification();
     
+    public delegate HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> auth);
+    public List<BeforeEndpointHandler> BeforeEndpoint = new ();
+    
     public void ProcessRequest(Stream stream)
     {
         try
@@ -56,7 +59,18 @@ public class Pipeline
             return new HttpResponse(404, "Not Found", new Dictionary<string, string>(), "Not Found");
         
         var identity = Authentification.Authentificate(request);
+
+        foreach (var handler in BeforeEndpoint)
+        {
+            var resp = handler(request, ep, identity);
+            if (resp != null)
+                return resp;
+        }
         
-        return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), identity);
+        return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), new MethodInvoke.InvokeOverride(typeof(Dictionary<string, string>), identity, "auth"));
+    }
+
+    public Pipeline()
+    {
     }
 }
