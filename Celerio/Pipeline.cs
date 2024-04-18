@@ -11,7 +11,7 @@ public class Pipeline
     
     public MethodInvoke MethodInvoke = new ();
     
-    public IAuthentification Authentification = new DefaultAuthentification();
+    public IAuthentification Authentification = new DefaultAuthentification("SampleKey", "SampleSalt");
     
     public delegate HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> auth);
     public List<BeforeEndpointHandler> BeforeEndpoint = new ();

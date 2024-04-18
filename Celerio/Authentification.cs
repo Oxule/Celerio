@@ -12,8 +12,6 @@ public interface IAuthentification
 
 public class DefaultAuthentification : IAuthentification
 {
-    private const string SECRET_KEY = "ILOVE1337BEER555ZXC10007MULMULADDDIV54228";
-    private const string SECRET_SALT = "SDFLKUSHJDFLKSJNV2348712693jkxzbdlfkjsdf";
     private readonly Aes Aes;
     public TimeSpan TokenExpiration = TimeSpan.FromDays(24);
     
@@ -77,14 +75,14 @@ public class DefaultAuthentification : IAuthentification
         return ms.ToArray();
     }
     
-    public DefaultAuthentification()
+    public DefaultAuthentification(string key, string salt)
     {
-        var key = MD5.HashData(Encoding.UTF8.GetBytes(SECRET_KEY));
-        var salt = MD5.HashData(Encoding.UTF8.GetBytes(SECRET_SALT));       
+        var k = MD5.HashData(Encoding.UTF8.GetBytes(key));
+        var s = MD5.HashData(Encoding.UTF8.GetBytes(salt));       
         var aes = Aes.Create();
         aes.KeySize = 128;
-        aes.Key = key;
-        aes.IV = salt;
+        aes.Key = k;
+        aes.IV = s;
         aes.Mode = CipherMode.CBC;
         Aes = aes;
     }
