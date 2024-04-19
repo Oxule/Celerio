@@ -11,7 +11,6 @@ public static class Endpoints
         return HttpResponse.Ok("Hello! This is Celerio Sample!");
     }
     
-    //[Response(400, "Bad Request")]
     [Route("GET", "/sum", "/add", "/add/{a}/{b}", "/sum/{a}/{b}")]
     public static HttpResponse Sum(int a, int b)
     {

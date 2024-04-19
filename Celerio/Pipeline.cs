@@ -3,6 +3,14 @@ using System.Text;
 
 namespace Celerio;
 
+public interface IAfterRequest
+{
+    public HttpResponse? AfterRequestHandler(HttpRequest request, Pipeline pipeline);
+}
+public interface IInitializable
+{
+    public void Initialize(Pipeline pipeline);
+}
 public interface IBeforeEndpoint
 {
     public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
@@ -63,6 +71,16 @@ public class Pipeline
 
     public HttpResponse PipelineExecution(HttpRequest request)
     {
+        foreach (var handler in Modules)
+        {
+            if (handler is IAfterRequest handlerAfterRequest)
+            {
+                var resp = handlerAfterRequest.AfterRequestHandler(request, this);
+                if (resp != null)
+                    return resp;
+            }
+        }
+        
         var ep = EndpointRouter.GetEndpoint(request, out var parameters);
 
         if(ep == null)
@@ -97,5 +115,16 @@ public class Pipeline
 
     public Pipeline()
     {
+    }
+
+    public void Initialize()
+    {
+        foreach (var handler in Modules)
+        {
+            if (handler is IInitializable handlerInit)
+            {
+                handlerInit.Initialize(this);
+            }
+        }
     }
 }
