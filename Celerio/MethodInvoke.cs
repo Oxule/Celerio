@@ -34,15 +34,6 @@ public class MethodInvoke
 
         for (int i = 0; i < p.Length; i++)
         {
-            if (p[i].Name.ToLower() == "body")
-            {
-                if (request.Body != null)
-                {
-                    args[i] = Deserialize(p[i].ParameterType, request.Body);
-                    continue;
-                }
-            }
-            
             bool overriden = false;
             foreach (var ovr in overrides)
             {
@@ -58,7 +49,8 @@ public class MethodInvoke
             }
             if(overriden)
                 continue;
-            var val = FindParameter(p[i].Name, request.Query, parameters, request.Headers);
+            
+            var val = FindParameter(p[i].Name, request.Body, request.Query, parameters);
             if (val == null)
             {
                 if (p[i].HasDefaultValue)
@@ -77,12 +69,6 @@ public class MethodInvoke
             var maxL = p[i].GetCustomAttribute<System.ComponentModel.DataAnnotations.MaxLengthAttribute>();
             if(maxL != null && val.Length > maxL.Length)
                 return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} has maximal length {maxL.Length}, but input length is {val.Length}");
-
-#if NET8_0_OR_GREATER
-            var L = p[i].GetCustomAttribute<System.ComponentModel.DataAnnotations.LengthAttribute>();
-            if(L != null && (val.Length > L.MaximumLength||val.Length < L.MinimumLength))
-                return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} has maximal length {L.MaximumLength} and minimal {L.MinimumLength}, but input length is {val.Length}");
-#endif
             
             var a = Deserialize(p[i].ParameterType, val);
             if (a == null)
@@ -100,21 +86,27 @@ public class MethodInvoke
         
         return (HttpResponse)method.Invoke(null, args);
     }
-
-    private string? FindParameter(string key, params Dictionary<string, string>[] dictionaries)
+    
+    private string? FindParameter(string key, string body, Dictionary<string, string> query, Dictionary<string, string> path)
     {
         var k = key.ToLower();
-        foreach (var dictionary in dictionaries)
+        if (k == "body")
+            return body;
+        
+        foreach (var kvp in query)
         {
-            foreach (var kvp in dictionary)
-            {
-                if(kvp.Key.ToLower() == k)
-                    return kvp.Value;
-            }
+            if(kvp.Key.ToLower() == k)
+                return kvp.Value;
         }
-
+        
+        foreach (var kvp in path)
+        {
+            if(kvp.Key.ToLower() == k)
+                return kvp.Value;
+        }
+        
         return null;
-    } 
+    }
     
     public object? Deserialize(Type type, string value)
     {
