@@ -3,7 +3,6 @@
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Title>Celerio</Title>
         <Authors>Oxule</Authors>
@@ -14,6 +13,7 @@
         <PackageTags>Celerio Web Http Server Fast Lightweight</PackageTags>
         <Copyright>Oxule</Copyright>
         <PackageLicenseUrl></PackageLicenseUrl>
+        <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     </PropertyGroup>
 
 </Project>
