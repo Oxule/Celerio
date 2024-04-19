@@ -33,7 +33,6 @@ public class StaticFiles : IAfterRequest
         
         foreach (var file in Files)
         {
-            Console.WriteLine($"{file.Key} - {request.URI}");
             if (file.Key != request.URI)
                 continue;
 

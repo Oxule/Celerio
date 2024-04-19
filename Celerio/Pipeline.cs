@@ -119,9 +119,9 @@ public class Pipeline
 
     public void Initialize()
     {
-        foreach (var handler in Modules)
+        for (int i = 0; i < Modules.Count; i++)
         {
-            if (handler is IInitializable handlerInit)
+            if (Modules[i] is IInitializable handlerInit)
             {
                 handlerInit.Initialize(this);
             }
