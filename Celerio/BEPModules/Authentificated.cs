@@ -6,7 +6,7 @@ public class Authentificated : Attribute { }
 
 public class AuthentificatedCheck : IBeforeEndpoint
 {
-    public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth)
+    public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
     {
         var attr = endpoint.Info.GetCustomAttribute<Authentificated>();
         if (attr != null)

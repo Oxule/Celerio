@@ -45,4 +45,11 @@ public static class Endpoints
     {
         return HttpResponse.Ok(auth["user"]);
     }
+    
+    [Cached(5)]
+    [Route("GET", "/cache")]
+    public static HttpResponse Cached(HttpRequest request)
+    {
+        return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
+    }
 }

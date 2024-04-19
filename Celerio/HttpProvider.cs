@@ -39,11 +39,9 @@ public class Http11ProtocolProvider : IHttpProvider
                 if (l == "")
                     break;
                 var p = l.Split(": ");
-                if (p.Length != 2)
-                    return false;
                 if (request.Headers.ContainsKey(p[0]))
                     return false;
-                request.Headers.Add(p[0], p[1]);
+                request.Headers.Add(p[0], string.Join(": ", p.Skip(1)));
             }
             
             pointer += l.Length + 1;
@@ -103,7 +101,7 @@ public class Http11ProtocolProvider : IHttpProvider
         {
             new ("Server", "Celerio/1.0"),
             new ("Connection", "close"),
-            new ("Date", DateTime.Now.ToString("r")),
+            new ("Date", DateTime.UtcNow.ToString("r")),
         };
 
         foreach (var header in headers)

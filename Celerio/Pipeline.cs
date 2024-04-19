@@ -6,7 +6,12 @@ namespace Celerio;
 public interface IBeforeEndpoint
 {
     public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        Dictionary<string, string> auth);
+        Dictionary<string, string> auth, Pipeline pipeline);
+}
+public interface IAfterEndpoint
+{
+    public HttpResponse? AfterEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
+        Dictionary<string, string> auth, Pipeline pipeline, HttpResponse response);
 }
 
 public class Pipeline
@@ -19,7 +24,7 @@ public class Pipeline
     
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey", "SampleSalt");
     
-    public List<IBeforeEndpoint> BeforeEndpoint = new (){new AuthentificatedCheck()};
+    public List<object> Modules = new (){new AuthentificatedCheck(), new Caching()};
     
     public void ProcessRequest(Stream stream)
     {
@@ -65,14 +70,29 @@ public class Pipeline
         
         var identity = Authentification.Authentificate(request);
 
-        foreach (var handler in BeforeEndpoint)
+        foreach (var handler in Modules)
         {
-            var resp = handler.BeforeEndpointHandler(request, ep, parameters, identity);
-            if (resp != null)
-                return resp;
+            if (handler is IBeforeEndpoint handlerBeforeEndpoint)
+            {
+                var resp = handlerBeforeEndpoint.BeforeEndpointHandler(request, ep, parameters, identity, this);
+                if (resp != null)
+                    return resp;
+            }
         }
         
-        return MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), new MethodInvoke.InvokeOverride(typeof(Dictionary<string, string>), identity, "auth"));
+        var response =  MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), new MethodInvoke.InvokeOverride(typeof(Dictionary<string, string>), identity, "auth"));
+
+        foreach (var handler in Modules)
+        {
+            if (handler is IAfterEndpoint handlerAfterEndpoint)
+            {
+                var resp = handlerAfterEndpoint.AfterEndpointHandler(request, ep, parameters, identity, this, response);
+                if (resp != null)
+                    response = resp;
+            }
+        }
+        
+        return response;
     }
 
     public Pipeline()
