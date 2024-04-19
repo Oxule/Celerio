@@ -11,7 +11,7 @@
         <PackageProjectUrl>https://www.nuget.org/packages/Celerio</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Oxule/Celerio</RepositoryUrl>
         <Company>Oxule</Company>
-        <PackageTags>Celerio, Web, Http, Server, Fast, Lightweight</PackageTags>
+        <PackageTags>Celerio Web Http Server Fast Lightweight</PackageTags>
         <Copyright>Oxule</Copyright>
         <PackageLicenseUrl></PackageLicenseUrl>
     </PropertyGroup>
