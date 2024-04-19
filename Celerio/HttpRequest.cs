@@ -6,6 +6,7 @@ public class HttpRequest
     public string URI { get; set; }
     public Dictionary<string, string> Query { get; set; }
     public Dictionary<string, string> Headers { get; set; }
+    public byte[]? BodyRaw { get; set; }
     public string? Body { get; set; }
 
     public string? GetCookie(string key)
@@ -26,15 +27,6 @@ public class HttpRequest
         return null;
     }
     
-    public HttpRequest(string method, string uri, Dictionary<string, string> query, Dictionary<string, string> headers, string? body)
-    {
-        Method = method;
-        URI = uri;
-        Query = query;
-        Headers = headers;
-        Body = body;
-    }
-
     public HttpRequest()
     {
         Query = new Dictionary<string, string>();

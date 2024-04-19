@@ -52,4 +52,11 @@ public static class Endpoints
     {
         return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
     }
+    
+    [Cached(60*60*24*30)]
+    [Route("GET", "/image/{name}")]
+    public static HttpResponse Image(string name)
+    {
+        return HttpResponse.File(name, "image/jpeg");
+    }
 }

@@ -52,6 +52,7 @@ public class Http11ProtocolProvider : IHttpProvider
             byte[] buffer = new byte[length];
             if (stream.Read(buffer, 0, length) != length)
                 return false;
+            request.BodyRaw = buffer;
             request.Body = Encoding.UTF8.GetString(buffer);
         }
 
@@ -113,7 +114,11 @@ public class Http11ProtocolProvider : IHttpProvider
     
     public void SendResponse(Stream stream, HttpResponse response)
     {
-        var body = Encoding.UTF8.GetBytes(response.Body);
+        byte[] body;
+        if(response.BodyRaw != null && response.BodyRaw.Length > 0)
+            body = response.BodyRaw;
+        else
+            body = Encoding.UTF8.GetBytes(response.Body);
         DefaultHeaders(response); 
         if (!response.Headers.ContainsKey("Content-Length"))
             response.Headers.Add("Content-Length", body.Length.ToString());
@@ -128,7 +133,8 @@ public class Http11ProtocolProvider : IHttpProvider
             writer.WriteLine($"{header.Key}: {header.Value}");
         }
         writer.WriteLine();
-        writer.WriteLine(response.Body);
         writer.Flush();
+        stream.Write(body, 0, body.Length);
+        stream.Flush();
     }
 }

@@ -1,9 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>Celerio</Title>
+        <Authors>Oxule</Authors>
+        <Description>Celerio is a Lightweight and Fast Framework for Building HTTP Web Apps in C#</Description>
+        <PackageProjectUrl>https://www.nuget.org/packages/Celerio</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Oxule/Celerio</RepositoryUrl>
+        <Company>Oxule</Company>
+        <PackageTags>Celerio, Web, Http, Server, Fast, Lightweight</PackageTags>
+        <Copyright>Oxule</Copyright>
+        <PackageLicenseUrl></PackageLicenseUrl>
     </PropertyGroup>
 
 </Project>
