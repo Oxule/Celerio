@@ -2,6 +2,7 @@ name: "Deploy to NuGet"
 
 on:
   push:
+    branches: [ main ]
     tags:
     - 'v*'
 
