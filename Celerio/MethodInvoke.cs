@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Celerio;
 
@@ -32,6 +34,15 @@ public class MethodInvoke
 
         for (int i = 0; i < p.Length; i++)
         {
+            if (p[i].Name.ToLower() == "body")
+            {
+                if (request.Body != null)
+                {
+                    args[i] = Deserialize(p[i].ParameterType, request.Body);
+                    continue;
+                }
+            }
+            
             bool overriden = false;
             foreach (var ovr in overrides)
             {
@@ -58,7 +69,6 @@ public class MethodInvoke
                         
                 return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} is not specified");
             }
-
             
             var minL = p[i].GetCustomAttribute<System.ComponentModel.DataAnnotations.MinLengthAttribute>();
             if(minL != null && val.Length < minL.Length)
@@ -118,6 +128,14 @@ public class MethodInvoke
         if (type == typeof(string))
             return value;
 
+        try
+        {
+            return JsonConvert.DeserializeObject(value, type);
+        }
+        catch
+        {
+            return null;
+        }
         try
         {
             TypeConverter conv = TypeDescriptor.GetConverter(type);

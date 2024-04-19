@@ -2,6 +2,7 @@
 
 namespace CelerioSamples;
 
+[Service("SampleService", "Sample Description")]
 public static class Endpoints
 {
     [Route("GET", "/")]
@@ -10,10 +11,23 @@ public static class Endpoints
         return HttpResponse.Ok("Hello! This is Celerio Sample!");
     }
     
+    [Response(400, "Bad Request")]
     [Route("GET", "/sum", "/add", "/add/{a}/{b}", "/sum/{a}/{b}")]
     public static HttpResponse Sum(int a, int b)
     {
         return HttpResponse.Ok((a+b).ToString());
+    }
+
+    public record User
+    {
+        public string Name;
+        public int Age;
+    }
+    
+    [Route("GET", "/user")]
+    public static HttpResponse Auth(User body)
+    {
+        return HttpResponse.Ok(body.Name);
     }
     
     [Route("GET", "/calc/{method}/{a}/{b}", "/calc/{method}")]

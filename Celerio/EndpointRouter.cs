@@ -16,22 +16,37 @@ public class Route : Attribute
     }
 } 
 
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class Service : Attribute
+{
+    public string Name { get; set; }
+    public string Description { get; set; }
+
+    public Service(string name, string description = "")
+    {
+        Name = name;
+        Description = description;
+    }
+} 
+
 public class EndpointRouter
 {
     public class Endpoint
     {
+        public Service? Service;
         public string[] Routes;
         public string HttpMethod;
         public MethodInfo? Info;
 
-        public Endpoint(string[] routes, string httpMethod, MethodInfo? info)
+        public Endpoint(string[] routes, string httpMethod, MethodInfo? info, Service? service = null)
         {
             Routes = routes;
             HttpMethod = httpMethod;
             Info = info;
+            Service = service;
         }
     }
-    private readonly List<Endpoint> _endpoints = new List<Endpoint>();
+    public readonly List<Endpoint> Endpoints = new List<Endpoint>();
 
     private PathMatcher PathMatcher { get; } = new ();
     
@@ -42,6 +57,9 @@ public class EndpointRouter
         {
             foreach (var t in asm.GetTypes())
             {
+                if(!t.IsClass)
+                    continue;
+                var service = t.GetCustomAttribute<Service>();
                 foreach (var method in t.GetMethods())
                 {
                     if (!method.IsStatic)
@@ -54,9 +72,9 @@ public class EndpointRouter
                     
                     Logging.Log($"Found Endpoint: {attr.Method} {string.Join(" ", attr.URI)}");
 
-                    _endpoints.Add(new Endpoint(attr.URI,
+                    Endpoints.Add(new Endpoint(attr.URI,
                         attr.Method,
-                        method));
+                        method, service));
                 }
             }
         }
@@ -65,7 +83,7 @@ public class EndpointRouter
     public Endpoint? GetEndpoint(HttpRequest request, out Dictionary<string,string>? parameters)
     {
         parameters = null;
-        foreach (var ep in _endpoints)
+        foreach (var ep in Endpoints)
         {
             foreach (var r in ep.Routes)
             {
