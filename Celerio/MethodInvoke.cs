@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
 namespace Celerio;
@@ -58,6 +59,20 @@ public class MethodInvoke
                 return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} is not specified");
             }
 
+            
+            var minL = p[i].GetCustomAttribute<MinLengthAttribute>();
+            if(minL != null && val.Length < minL.Length)
+                return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} has minimal length {minL.Length}, but input length is {val.Length}");
+                
+            var maxL = p[i].GetCustomAttribute<MaxLengthAttribute>();
+            if(maxL != null && val.Length > maxL.Length)
+                return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} has maximal length {maxL.Length}, but input length is {val.Length}");
+            
+            var L = p[i].GetCustomAttribute<LengthAttribute>();
+            if(L != null && (val.Length > L.MaximumLength||val.Length < L.MinimumLength))
+                return new HttpResponse(400, "Bad Request", new Dictionary<string, string>(), $"Parameter {p[i].Name.ToLower()} has maximal length {L.MaximumLength} and minimal {L.MinimumLength}, but input length is {val.Length}");
+            
+            
             var a = Deserialize(p[i].ParameterType, val);
             if (a == null)
             {
