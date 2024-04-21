@@ -2,33 +2,6 @@
 
 namespace Celerio;
 
-
-[AttributeUsage(AttributeTargets.Method, Inherited = false)]
-public class Route : Attribute
-{
-    public string Method { get; set; }
-    public string[] URI { get; set; }
-
-    public Route(string method, params string[] uri)
-    {
-        Method = method;
-        URI = uri;
-    }
-} 
-
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class Service : Attribute
-{
-    public string Name { get; set; }
-    public string Description { get; set; }
-
-    public Service(string name, string description = "")
-    {
-        Name = name;
-        Description = description;
-    }
-} 
-
 public class EndpointRouter
 {
     public class Endpoint
