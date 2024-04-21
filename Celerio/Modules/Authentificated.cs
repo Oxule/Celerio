@@ -4,9 +4,9 @@ namespace Celerio;
 
 public class Authentificated : Attribute { }
 
-public class AuthentificatedCheck : IBeforeEndpoint
+public class AuthentificatedCheck : ModuleBase
 {
-    public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
+    public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
     {
         var attr = endpoint.Info.GetCustomAttribute<Authentificated>();
         if (attr != null)

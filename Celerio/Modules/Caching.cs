@@ -14,7 +14,7 @@ public class Cached : Attribute
     }
 }
 
-public class Caching : IBeforeEndpoint, IAfterEndpoint
+public class Caching : ModuleBase
 {
     private class Cache
     {
@@ -41,7 +41,7 @@ public class Caching : IBeforeEndpoint, IAfterEndpoint
         return request.Method+request.URI;
     }
     
-    public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
+    public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
     {
         var attr = endpoint.Info.GetCustomAttribute<Cached>();
         if (attr != null)
@@ -67,7 +67,7 @@ public class Caching : IBeforeEndpoint, IAfterEndpoint
         return null;
     }
 
-    public HttpResponse? AfterEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth,
+    public override HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth,
         Pipeline pipeline, HttpResponse response)
     {
         var attr = endpoint.Info.GetCustomAttribute<Cached>();
