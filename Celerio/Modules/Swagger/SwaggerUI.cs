@@ -1,8 +1,8 @@
 ﻿namespace Celerio;
 
-public class SwaggerUI : IInitializable
+public class SwaggerUI : ModuleBase
 {
-    public void Initialize(Pipeline pipeline)
+    public override void Initialize(Pipeline pipeline)
     {
         pipeline.Modules.Add(new StaticFiles(new Dictionary<string, StaticFiles.StaticFile>()
         {

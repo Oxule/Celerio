@@ -1,6 +1,6 @@
 ﻿namespace Celerio;
 
-public class StaticFiles : IAfterRequest
+public class StaticFiles : ModuleBase
 {
     public struct StaticFile
     {
@@ -21,12 +21,13 @@ public class StaticFiles : IAfterRequest
     {
         Files = files;
     }
-    
+
     public StaticFiles()
     {
     }
-    
-    public HttpResponse? AfterRequestHandler(HttpRequest request, Pipeline pipeline)
+
+
+    public override HttpResponse? AfterRequest(HttpRequest request, Pipeline pipeline)
     {
         if (request.Method != "GET") 
             return null;

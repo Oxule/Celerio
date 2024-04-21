@@ -3,23 +3,17 @@ using System.Text;
 
 namespace Celerio;
 
-public interface IAfterRequest
+public class ModuleBase
 {
-    public HttpResponse? AfterRequestHandler(HttpRequest request, Pipeline pipeline);
-}
-public interface IInitializable
-{
-    public void Initialize(Pipeline pipeline);
-}
-public interface IBeforeEndpoint
-{
-    public HttpResponse? BeforeEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        Dictionary<string, string> auth, Pipeline pipeline);
-}
-public interface IAfterEndpoint
-{
-    public HttpResponse? AfterEndpointHandler(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        Dictionary<string, string> auth, Pipeline pipeline, HttpResponse response);
+    public virtual void Initialize(Pipeline pipeline){}
+
+    public virtual HttpResponse? AfterRequest(HttpRequest request, Pipeline pipeline) { return null;}
+    
+    public virtual HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
+        Dictionary<string, string> auth, Pipeline pipeline) { return null;}
+    
+    public virtual HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
+        Dictionary<string, string> auth, Pipeline pipeline, HttpResponse response) { return null;}
 }
 
 public class Pipeline
@@ -32,7 +26,7 @@ public class Pipeline
     
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey", "SampleSalt");
     
-    public List<object> Modules = new (){new AuthentificatedCheck(), new Caching()};
+    public List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching()};
     
     public void ProcessRequest(Stream stream)
     {
@@ -71,14 +65,11 @@ public class Pipeline
 
     public HttpResponse PipelineExecution(HttpRequest request)
     {
-        foreach (var handler in Modules)
+        foreach (var module in Modules)
         {
-            if (handler is IAfterRequest handlerAfterRequest)
-            {
-                var resp = handlerAfterRequest.AfterRequestHandler(request, this);
-                if (resp != null)
-                    return resp;
-            }
+            var resp = module.AfterRequest(request, this);
+            if (resp != null)
+                return resp;
         }
         
         var ep = EndpointRouter.GetEndpoint(request, out var parameters);
@@ -88,26 +79,20 @@ public class Pipeline
         
         var identity = Authentification.Authentificate(request);
 
-        foreach (var handler in Modules)
+        foreach (var module in Modules)
         {
-            if (handler is IBeforeEndpoint handlerBeforeEndpoint)
-            {
-                var resp = handlerBeforeEndpoint.BeforeEndpointHandler(request, ep, parameters, identity, this);
-                if (resp != null)
-                    return resp;
-            }
+            var resp = module.BeforeEndpoint(request, ep, parameters, identity, this);
+            if (resp != null)
+                return resp;
         }
         
         var response =  MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), new MethodInvoke.InvokeOverride(typeof(Dictionary<string, string>), identity, "auth"));
 
-        foreach (var handler in Modules)
+        foreach (var module in Modules)
         {
-            if (handler is IAfterEndpoint handlerAfterEndpoint)
-            {
-                var resp = handlerAfterEndpoint.AfterEndpointHandler(request, ep, parameters, identity, this, response);
-                if (resp != null)
-                    response = resp;
-            }
+            var resp = module.AfterEndpoint(request, ep, parameters, identity, this, response);
+            if (resp != null)
+                return resp;
         }
         
         return response;
@@ -121,10 +106,7 @@ public class Pipeline
     {
         for (int i = 0; i < Modules.Count; i++)
         {
-            if (Modules[i] is IInitializable handlerInit)
-            {
-                handlerInit.Initialize(this);
-            }
+            Modules[i].Initialize(this);
         }
     }
 }
