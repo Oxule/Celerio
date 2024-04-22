@@ -22,7 +22,7 @@ public class Pipeline
     
     public EndpointRouter EndpointRouter = new ();
     
-    public MethodInvoke MethodInvoke = new ();
+    public EndpointInvoke EndpointInvoke = new ();
     
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey", "SampleSalt");
     
@@ -86,7 +86,11 @@ public class Pipeline
                 return resp;
         }
         
-        var response =  MethodInvoke.ParameterizedInvoke(ep.Info, request, parameters, new MethodInvoke.InvokeOverride(typeof(HttpRequest), request, ""), new MethodInvoke.InvokeOverride(typeof(Pipeline), this, ""), new MethodInvoke.InvokeOverride(typeof(Dictionary<string, string>), identity, "auth"));
+        var response = EndpointInvoke.Invoke(
+            ep.Info, request, parameters,
+            new (typeof(HttpRequest), request),
+            new (typeof(Pipeline), this),
+            new (typeof(Dictionary<string, string>), identity, "auth"));
 
         foreach (var module in Modules)
         {

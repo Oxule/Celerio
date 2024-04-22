@@ -2,6 +2,8 @@
 
 public class PathMatcher
 { 
+    //TODO: Fix Issue that /a/{b}.jpg for e.g. works incorrect
+    
     public bool Match(string path, string pattern, out Dictionary<string, string> parameters)
     {
         parameters = new Dictionary<string, string>();

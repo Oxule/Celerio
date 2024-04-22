@@ -54,7 +54,7 @@ public class EndpointRouter
     }
 
     public Endpoint? GetEndpoint(HttpRequest request, out Dictionary<string,string>? parameters)
-    {
+    { 
         parameters = null;
         foreach (var ep in Endpoints)
         {
@@ -68,6 +68,4 @@ public class EndpointRouter
         }
         return null;
     }
-    
-    
 }
