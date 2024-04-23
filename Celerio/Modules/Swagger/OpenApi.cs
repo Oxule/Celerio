@@ -310,7 +310,7 @@ public class OpenApi
                         sb.AppendLine($"\t\t\t\trequired: {ep.RequestBody?.Required}");
                     }
                     
-                    if (ep.Parameters != null)
+                    if (ep.Parameters != null&&ep.Parameters.Count != 0)
                     {
                         sb.AppendLine($"\t\t\tparameters:");
                         foreach (var p in ep.Parameters)

@@ -85,7 +85,7 @@ public class SwaggerGen : ModuleBase
 
             foreach (var p in ep.Info.GetCustomAttributes<Response>())
             {
-                e.Responses.Add(new (p.StatusCode, p.Description, null));
+                e.Responses.Add(new (p.StatusCode, p.Description, DescribeType(p.Type)));
             }
             
             r.Endpoints.Add(e);
@@ -94,10 +94,23 @@ public class SwaggerGen : ModuleBase
         return routes;
     }
     
-    public static OpenApi.Object? DescribeType(Type type)
+    public static OpenApi.Object? DescribeType(Type? type)
     {
+        if (type == null)
+            return null;
+        
+        if(type == typeof(string))
+            return new OpenApi.ObjectType("string", null, "example");
+        
+        if (type.Name == "Nullable`1")
+        {
+            Console.WriteLine($"[{type.Name}] is Nullable of {type.GenericTypeArguments[0]}");
+            return DescribeType(type.GenericTypeArguments[0]);
+        }
+        
         if (IsArray(type, out var element))
         {
+            Console.WriteLine($"[{type.Name}] is Array of {element.Name}");
             var d = DescribeType(element);
             if (d == null)
                 return null;
@@ -106,10 +119,11 @@ public class SwaggerGen : ModuleBase
 
         if (type.IsClass)
         {
+            Console.WriteLine($"[{type.Name}] is Class");
             List<OpenApi.ObjectClass.Property> props = new ();
             foreach (var f in type.GetFields())
             {
-                if (f.IsStatic || !f.IsPublic)
+                if (f.IsPublic&&!f.IsStatic)
                 {
                     var d = DescribeType(f.FieldType);
                     if (d == null)
@@ -120,19 +134,29 @@ public class SwaggerGen : ModuleBase
             return new OpenApi.ObjectClass(props);
         }
         
-        if(type == typeof(string))
-            return new OpenApi.ObjectType("string", null, "example");
+        Console.WriteLine($"[{type.Name}] is Generic Variable");
         
         //TODO: Expand List
         if(type == typeof(int)||type == typeof(long))
             return new OpenApi.ObjectType("integer", null, "123");
         
+        if(type == typeof(bool))
+            return new OpenApi.ObjectType("boolean", null, "true");
+        
+        if(type == typeof(DateTime))
+            return new OpenApi.ObjectType("date", null, "2021-01-01");
+        
         return null;
     }
     
-    //TODO: Some later make that Lists also arrays
+    //TODO: Some later make that Lists also arrays(every Enumerator)
     private static bool IsArray(Type type, out Type? elementType)
     {
+        if (type.Name == "List`1")
+        {
+            elementType = type.GenericTypeArguments[0];
+            return true;
+        }
         if (type.IsArray)
         {
             elementType = type.GetElementType();
