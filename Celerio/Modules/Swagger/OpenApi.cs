@@ -28,7 +28,7 @@ public class OpenApi
 
     #region Tags
 
-    public struct Tag
+    public class Tag
     {
         public string Name;
         public string? Description;
@@ -141,6 +141,44 @@ public class OpenApi
             Items = items;
         }
     }
+    public class ObjectClass : Object
+    {
+        public class Property
+        {
+            public string Name;
+            public Object Object;
+
+            public Property(string name, Object o)
+            {
+                Name = name;
+                Object = o;
+            }
+        }
+        
+        public List<Property> Items;
+        
+        public override string GetBody(int tabs)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            string t = Tab(tabs);
+            
+            sb.AppendLine($"{t}type: object");
+            sb.AppendLine($"{t}properties:");
+            foreach (var item in Items)
+            {
+                sb.AppendLine($"{t}\t{item.Name}:");
+                sb.Append($"{item.Object.GetBody(tabs+2)}");
+            }
+            
+            return sb.ToString();
+        }
+
+        public ObjectClass(List<Property> items)
+        {
+            Items = items;
+        }
+    }
 
     private static string Tab(int tabCount)
     {
@@ -154,17 +192,17 @@ public class OpenApi
     
     #region Routes
     
-    public struct Route
+    public class Route
     {
         public string Path;
 
-        public struct Endpoint
+        public class Endpoint
         {
             public string Method;
             public string? Tag;
             public string? Description;
             
-            public struct BodyRequest
+            public class BodyRequest
             {
                 public Object Schema;
                 public bool Required;
@@ -180,7 +218,7 @@ public class OpenApi
             
             public BodyRequest? RequestBody;
             
-            public struct Parameter
+            public class Parameter
             {
                 public string Name;
                 public bool Required;
@@ -200,7 +238,7 @@ public class OpenApi
             
             public List<Parameter>? Parameters;
             
-            public struct Response
+            public class Response
             {
                 public int StatusCode;
                 public string Description;
@@ -314,10 +352,10 @@ public class OpenApi
 
         #region Schemas
 
-            public struct SchemaObject
+            public class SchemaObject
             {
                 public string Name;
-                public struct Property
+                public class Property
                 {
                     public string Name;
                     public Object Object;
@@ -380,5 +418,10 @@ public class OpenApi
         Tags = tags;
         Routes = routes;
         SchemasObjects = schemas;
+    }
+
+    public string Serialize()
+    {
+        return (GenerateHeader() + GenerateTags() + GenerateRoutes() + GenerateSchemas()).Replace("\t", "  ");
     }
 }

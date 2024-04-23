@@ -1,4 +1,5 @@
 ﻿using Celerio;
+using Newtonsoft.Json;
 
 namespace CelerioSamples;
 
@@ -23,14 +24,21 @@ public static class Endpoints
         public int Age;
     }
     
-    [Route("GET", "/user")]
-    public static HttpResponse Auth(User body)
+    [Route("POST", "/user")]
+    public static HttpResponse user(User body)
     {
         return HttpResponse.Ok(body.Name);
     }
     
+    [Response(200, "OK", typeof(User))]
+    [Route("GET", "/user")]
+    public static HttpResponse getUser()
+    {
+        return HttpResponse.Ok(JsonConvert.SerializeObject(new User { Name = "John", Age = 30 }));
+    }
+    
     [Route("GET", "/calc/{method}/{a}/{b}", "/calc/{method}")]
-    public static HttpResponse Calc(int a, int b, string method)
+    public static HttpResponse Calc(int a, int b, string method = "add")
     {
         switch (method)
         {
