@@ -315,12 +315,12 @@ public class OpenApi
                         sb.AppendLine($"\t\t\tparameters:");
                         foreach (var p in ep.Parameters)
                         {
-                            sb.AppendLine($"\t\t\t\t- {p.Name}");
+                            sb.AppendLine($"\t\t\t\t- name: {p.Name}");
                             if(p.In != null)
                                 sb.AppendLine($"\t\t\t\t\tin: {p.In}");
                             if(p.Description != null)
                                 sb.AppendLine($"\t\t\t\t\tdescription: {p.Description}");
-                            sb.AppendLine($"\t\t\t\t\trequired: {p.Required}");
+                            sb.AppendLine($"\t\t\t\t\trequired: {p.Required.ToString().ToLower()}");
                             sb.AppendLine($"\t\t\t\t\tschema:");
                             sb.Append($"{p.Schema.GetBody(6)}");
                         }

@@ -42,30 +42,10 @@ public class SwaggerGen : ModuleBase
     //TODO: did'nt work for now :(
     public static List<OpenApi.SchemaObject> FindAllSchemas(Pipeline pipeline)
     {
-        List<Type> types = new List<Type>();
+        var schemas = new List<OpenApi.SchemaObject>();
         
-        foreach (var ep in pipeline.EndpointRouter.Endpoints)
-        {
-            foreach (var p in ep.Info.GetParameters())
-            {
-                if(types.Contains(p.ParameterType))
-                    continue;
-                if (p.ParameterType.IsClass)
-                {
-                    var parameter = new Parameter(p);
-                    if(!parameter.External)
-                        continue;
-                    
-                    types.Add(p.ParameterType);
-                }
-            }
-
-            foreach (var r in ep.Info.GetCustomAttributes<Response>())
-            {
-            }
-        }
         
-        return null;
+        return schemas;
     }
 
     public static List<OpenApi.Route> FindAllRoutes(Pipeline pipeline)
@@ -81,12 +61,27 @@ public class SwaggerGen : ModuleBase
                 routes.Add(r);
             }
 
-            var e = new OpenApi.Route.Endpoint(ep.HttpMethod.ToLower(), new(), ep.Service?.Name, null, new());
+            var e = new OpenApi.Route.Endpoint(ep.HttpMethod.ToLower(), new(), ep.Service?.Name);
 
             foreach (var p in ep.Info.GetCustomAttributes<Response>())
             {
                 e.Responses.Add(new (p.StatusCode, p.Description, DescribeType(p.Type)));
             }
+            
+            if(e.Responses.Count == 0)
+                e.Responses.Add(new (200, "OK"));
+            
+            List<OpenApi.Route.Endpoint.Parameter> parameters = new List<OpenApi.Route.Endpoint.Parameter>();
+            
+            foreach (var p in ep.Info.GetParameters())
+            {
+                if(Parameter.InternalNames.Contains(p.Name.ToLower())||Parameter.InternalTypes.Contains(p.ParameterType))
+                    continue;
+                parameters.Add(new OpenApi.Route.Endpoint.Parameter(p.Name,DescribeType(p.ParameterType), !p.HasDefaultValue, null, "query"));
+            }
+
+            if (parameters.Count > 0)
+                e.Parameters = parameters;
             
             r.Endpoints.Add(e);
         }
@@ -132,6 +127,18 @@ public class SwaggerGen : ModuleBase
                 }
             }
             return new OpenApi.ObjectClass(props);
+        }
+        
+        if (type.IsEnum)
+        {
+            Console.WriteLine($"[{type.Name}] is Enum");
+            List<string> enums = new ();
+            foreach (var e in type.GetEnumNames())
+            {
+                enums.Add(e.ToLower());
+            }
+
+            return new OpenApi.ObjectType("string", null, enums[0], enums);
         }
         
         Console.WriteLine($"[{type.Name}] is Generic Variable");

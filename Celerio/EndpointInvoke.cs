@@ -153,6 +153,19 @@ public class EndpointInvoke
         if (type == typeof(string))
             return value;
         
+        //Process Enums
+        if (type.IsEnum)
+        {
+            var names = type.GetEnumNames();
+            for (int i = 0; i < names.Length; i++)
+            {
+                if (names[i].ToLower() == value.ToLower())
+                {
+                    return type.GetEnumValues().GetValue(i);
+                }
+            }
+        }
+        
         try
         {
             return JsonConvert.DeserializeObject(value, type);

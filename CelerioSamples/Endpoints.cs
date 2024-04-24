@@ -11,6 +11,25 @@ public static class Endpoints
     {
         return HttpResponse.Ok("Hello! This is Celerio Sample!");
     }
+
+
+    public enum SampleEnum
+    {
+        A,
+        B
+    }
+    [Route("GET", "/enum")]
+    public static HttpResponse EnumTest(SampleEnum e)
+    {
+        switch (e)
+        {
+            case SampleEnum.A:
+                return HttpResponse.Ok("AHAHAHA it works");
+            case SampleEnum.B:
+                return HttpResponse.Ok("AHAHAHA it works but B");
+        }
+        return HttpResponse.Ok("Awwww..");
+    }
     
     [Route("GET", "/sum", "/add", "/add/{a}/{b}", "/sum/{a}/{b}")]
     public static HttpResponse Sum(int a, int b)
