@@ -75,9 +75,15 @@ public class SwaggerGen : ModuleBase
             
             foreach (var p in ep.Info.GetParameters())
             {
+                if (p.Name.ToLower() == "body")
+                {
+                    e.RequestBody =
+                        new OpenApi.Route.Endpoint.BodyRequest(DescribeType(p.ParameterType), !p.HasDefaultValue, null);
+                    continue;
+                }
                 if(Parameter.InternalNames.Contains(p.Name.ToLower())||Parameter.InternalTypes.Contains(p.ParameterType))
                     continue;
-                parameters.Add(new OpenApi.Route.Endpoint.Parameter(p.Name,DescribeType(p.ParameterType), !p.HasDefaultValue, null, "query"));
+                parameters.Add(new OpenApi.Route.Endpoint.Parameter(p.Name,DescribeType(p.ParameterType), !p.HasDefaultValue, null, IsInRoute(p.Name, ep.Routes[0])?"path":"query"));
             }
 
             if (parameters.Count > 0)
@@ -135,7 +141,7 @@ public class SwaggerGen : ModuleBase
             List<string> enums = new ();
             foreach (var e in type.GetEnumNames())
             {
-                enums.Add(e.ToLower());
+                enums.Add(e);
             }
 
             return new OpenApi.ObjectType("string", null, enums[0], enums);
@@ -147,11 +153,14 @@ public class SwaggerGen : ModuleBase
         if(type == typeof(int)||type == typeof(long))
             return new OpenApi.ObjectType("integer", null, "123");
         
+        if(type == typeof(float)||type == typeof(double))
+            return new OpenApi.ObjectType("number", null, "12.34");
+        
         if(type == typeof(bool))
             return new OpenApi.ObjectType("boolean", null, "true");
         
         if(type == typeof(DateTime))
-            return new OpenApi.ObjectType("date", null, "2021-01-01");
+            return new OpenApi.ObjectType("date", null, "2021-01-01T13:02:22.95467");
         
         return null;
     }
@@ -174,5 +183,11 @@ public class SwaggerGen : ModuleBase
 
         elementType = null;
         return false;
+    }
+
+    private static bool IsInRoute(string name, string route)
+    {
+        var p = "{" + name + "}";
+        return route.Contains(p);
     }
 }

@@ -37,33 +37,90 @@ public static class Pets
             Taken = taken;
         }
     }
-
     public record User
     {
         public string Name;
-        public List<Pet> Pets;
         public int? Age;
         public bool? Gender;
 
-        public User(string name, List<Pet> pets, int? age = null, bool? gender = null)
+        public User(string name, int? age = null, bool? gender = null)
         {
             Name = name;
-            Pets = pets;
             Age = age;
             Gender = gender;
         }
     }
-    
+
+    public static List<Pet> StaticPets = new List<Pet>()
+    {
+        new ("Billy", new Animal("Bulldog", Animal.AnimalType.Dog), DateTime.Now),
+        new ("Dany", new Animal("Cow", Animal.AnimalType.Cat), DateTime.MinValue),
+        new ("Joshua", new Animal("Goldfish", Animal.AnimalType.Fish), DateTime.MaxValue),
+    };
     
     [Response(200, "OK", typeof(User))]
     [Response(401, "Unauthorized")]
     [Route("GET", "/pets/me")]
     public static HttpResponse GetMe()
     {
-        return HttpResponse.Ok(JsonConvert.SerializeObject(new User("Oxule", new List<Pet>()
-        {
-            new Pet("Billy", new Animal("Bulldog", Animal.AnimalType.Dog), DateTime.Now),
-            new Pet("Dany", new Animal("Cow", Animal.AnimalType.Cat), DateTime.Now),
-        }, 15)));
+        return HttpResponse.Ok(JsonConvert.SerializeObject(new User("Oxule", 15)));
+    }
+    
+    [Response(200, "OK", typeof(User))]
+    [Response(401, "Unauthorized")]
+    [Route("PUT", "/pets/me")]
+    public static HttpResponse PutMe(User body)
+    {
+        return HttpResponse.Ok(JsonConvert.SerializeObject(body));
+    }
+    
+    [Response(200, "OK", typeof(User))]
+    [Response(401, "Unauthorized")]
+    [Route("DELETE", "/pets/me")]
+    public static HttpResponse DeleteMe()
+    {
+        return HttpResponse.Ok("Deleted!");
+    }
+    
+    [Response(200, "OK", typeof(List<Pet>))]
+    [Response(401, "Unauthorized")]
+    [Route("GET", "/pets")]
+    public static HttpResponse GetPets()
+    {
+        return HttpResponse.Ok(JsonConvert.SerializeObject(StaticPets));
+    }
+    
+    [Response(200, "OK", typeof(List<Pet>))]
+    [Response(401, "Unauthorized")]
+    [Route("POST", "/pet")]
+    public static HttpResponse PostPet(Pet body)
+    {
+        var p = StaticPets;
+        p.Add(body);
+        return HttpResponse.Ok(JsonConvert.SerializeObject(p));
+    }
+    
+    [Response(200, "OK", typeof(Pet))]
+    [Response(404, "Not Found")]
+    [Response(401, "Unauthorized")]
+    [Route("GET", "/pet/{id}")]
+    public static HttpResponse GetPet(int id)
+    {
+        if(id < 0 || id >= StaticPets.Count)
+            return HttpResponse.NotFound();
+        return HttpResponse.Ok(JsonConvert.SerializeObject(StaticPets[id]));
+    }
+    
+    [Response(200, "OK", typeof(List<Pet>))]
+    [Response(404, "Not Found")]
+    [Response(401, "Unauthorized")]
+    [Route("DELETE", "/pet/{id}")]
+    public static HttpResponse DeletePet(int id)
+    {
+        if(id < 0 || id >= StaticPets.Count)
+            return HttpResponse.NotFound();
+        var p = StaticPets;
+        p.RemoveAt(id);
+        return HttpResponse.Ok(JsonConvert.SerializeObject(p));
     }
 }

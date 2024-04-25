@@ -1,5 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace Celerio;
 
@@ -104,6 +107,12 @@ public class Pipeline
 
     public Pipeline()
     {
+        JsonConvert.DefaultSettings = (() =>
+        {
+            var settings = new JsonSerializerSettings();
+            settings.Converters.Add(new StringEnumConverter { NamingStrategy = new DefaultNamingStrategy()});
+            return settings;
+        });
     }
 
     public void Initialize()

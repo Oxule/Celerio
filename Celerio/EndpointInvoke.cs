@@ -164,6 +164,8 @@ public class EndpointInvoke
                     return type.GetEnumValues().GetValue(i);
                 }
             }
+
+            return null;
         }
         
         try

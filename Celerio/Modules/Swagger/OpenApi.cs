@@ -334,7 +334,7 @@ public class OpenApi
                         if (r.Schema != null)
                         {
                             sb.AppendLine($"\t\t\t\t\tcontent:");
-                            sb.AppendLine($"\t\t\t\t\t\tdefault:");
+                            sb.AppendLine($"\t\t\t\t\t\tapplication/json:");
                             sb.AppendLine($"\t\t\t\t\t\t\tschema:");
                             sb.Append($"{r.Schema.GetBody(8)}");
                         }

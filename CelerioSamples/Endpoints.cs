@@ -55,19 +55,28 @@ public static class Endpoints
     {
         return HttpResponse.Ok(JsonConvert.SerializeObject(new User { Name = "John", Age = 30 }));
     }
+
+    public enum CalcMethod
+    {
+        Add,
+        Multiply,
+        Subtract,
+        Divide
+    }
     
+    [Response(200, "Successfully calculated", typeof(float))]
     [Route("GET", "/calc/{method}/{a}/{b}", "/calc/{method}")]
-    public static HttpResponse Calc(int a, int b, string method = "add")
+    public static HttpResponse Calc(float a, float b, CalcMethod method)
     {
         switch (method)
         {
-            case "add":
+            case CalcMethod.Add:
                 return HttpResponse.Ok((a+b).ToString());
-            case "sub":
+            case CalcMethod.Subtract:
                 return HttpResponse.Ok((a-b).ToString());
-            case "mul":
+            case CalcMethod.Multiply:
                 return HttpResponse.Ok((a*b).ToString());
-            case "div":
+            case CalcMethod.Divide:
                 return HttpResponse.Ok((a/b).ToString());
         }
         return HttpResponse.Ok((a+b).ToString());
