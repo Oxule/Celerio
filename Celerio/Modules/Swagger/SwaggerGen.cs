@@ -105,13 +105,11 @@ public class SwaggerGen : ModuleBase
         
         if (type.Name == "Nullable`1")
         {
-            Console.WriteLine($"[{type.Name}] is Nullable of {type.GenericTypeArguments[0]}");
             return DescribeType(type.GenericTypeArguments[0]);
         }
         
         if (IsArray(type, out var element))
         {
-            Console.WriteLine($"[{type.Name}] is Array of {element.Name}");
             var d = DescribeType(element);
             if (d == null)
                 return null;
@@ -120,7 +118,6 @@ public class SwaggerGen : ModuleBase
 
         if (type.IsClass)
         {
-            Console.WriteLine($"[{type.Name}] is Class");
             List<OpenApi.ObjectClass.Property> props = new ();
             foreach (var f in type.GetFields())
             {
@@ -137,7 +134,6 @@ public class SwaggerGen : ModuleBase
         
         if (type.IsEnum)
         {
-            Console.WriteLine($"[{type.Name}] is Enum");
             List<string> enums = new ();
             foreach (var e in type.GetEnumNames())
             {
@@ -146,8 +142,6 @@ public class SwaggerGen : ModuleBase
 
             return new OpenApi.ObjectType("string", null, enums[0], enums);
         }
-        
-        Console.WriteLine($"[{type.Name}] is Generic Variable");
         
         //TODO: Expand List
         if(type == typeof(int)||type == typeof(long))
