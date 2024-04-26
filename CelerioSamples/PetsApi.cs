@@ -95,7 +95,7 @@ public static class Pets
     [Route("POST", "/pet")]
     public static HttpResponse PostPet(Pet body)
     {
-        var p = StaticPets;
+        var p = new List<Pet>(StaticPets);
         p.Add(body);
         return HttpResponse.Ok(JsonConvert.SerializeObject(p));
     }
@@ -119,7 +119,7 @@ public static class Pets
     {
         if(id < 0 || id >= StaticPets.Count)
             return HttpResponse.NotFound();
-        var p = StaticPets;
+        var p = new List<Pet>(StaticPets);
         p.RemoveAt(id);
         return HttpResponse.Ok(JsonConvert.SerializeObject(p));
     }
