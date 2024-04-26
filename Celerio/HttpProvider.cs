@@ -47,7 +47,7 @@ public class Http11ProtocolProvider : IHttpProvider
             pointer += l.Length + 1;
         }
         
-        if (request.Headers.TryGetValue("Content-Length", out var contentLength)&&int.TryParse(contentLength, out var length))
+        if (request.Headers.TryGetValue("Content-Length", out var contentLength)&&int.TryParse(contentLength, out var length)&&length>0)
         {
             byte[] buffer = new byte[length];
             if (stream.Read(buffer, 0, length) != length)
