@@ -90,10 +90,68 @@ public class Http11ProtocolProvider : IHttpProvider
             {
                 break;
             }
+
+            if (b == '%')
+            {
+                var hbyte = new byte[2];
+                stream.Read(hbyte, 0, 2);
+                buffer.Add(HexToByte(hbyte));
+                continue;
+            }
             buffer.Add((byte)b);
         }
         
         return Encoding.UTF8.GetString(buffer.ToArray()).Trim();
+    }
+
+    private static byte HexToByte(byte[] chars)
+    {
+        if(chars.Length != 2)
+            throw new ArgumentException("Input HEX not a byte");
+        byte a = HexCharToByte(chars[0]);
+        byte b = HexCharToByte(chars[1]);
+        
+        return (byte)(a*16+b);
+    }
+
+    private static byte HexCharToByte(byte c)
+    {
+        switch (c)
+        {
+            case (byte)'0':
+                return 0;
+            case (byte)'1':
+                return 1;
+            case (byte)'2':
+                return 2;
+            case (byte)'3':
+                return 3;
+            case (byte)'4':
+                return 4;
+            case (byte)'5':
+                return 5;
+            case (byte)'6':
+                return 6;
+            case (byte)'7':
+                return 7;
+            case (byte)'8':
+                return 8;
+            case (byte)'9':
+                return 9;
+            case (byte)'A':
+                return 10;
+            case (byte)'B':
+                return 11;
+            case (byte)'C':
+                return 12;
+            case (byte)'D':
+                return 13;
+            case (byte)'E':
+                return 14;
+            case (byte)'F':
+                return 15;
+        }
+        throw new ArgumentException("Input HEX not a byte");
     }
     
     private void DefaultHeaders(HttpResponse resp)

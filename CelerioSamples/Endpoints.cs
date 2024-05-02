@@ -49,6 +49,12 @@ public static class Endpoints
         return HttpResponse.Ok(body.Name);
     }
     
+    [Route("GET", "/unicode")]
+    public static HttpResponse unicodeTest(string line)
+    {
+        return HttpResponse.Ok(line);
+    }
+    
     [Response(200, "OK", typeof(User))]
     [Route("GET", "/user")]
     public static HttpResponse getUser()
