@@ -18,10 +18,10 @@ public class Caching : ModuleBase
 {
     private class Cache
     {
-        public HttpResponse Response;
+        public HttpResponse? Response;
         public DateTime LastUpdated;
 
-        public Cache(HttpResponse response, DateTime lastUpdated)
+        public Cache(HttpResponse? response, DateTime lastUpdated)
         {
             Response = response;
             LastUpdated = lastUpdated;

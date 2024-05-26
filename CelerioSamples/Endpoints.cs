@@ -1,4 +1,5 @@
-﻿using Celerio;
+﻿using System.Globalization;
+using Celerio;
 using Newtonsoft.Json;
 
 namespace CelerioSamples;
@@ -77,15 +78,15 @@ public static class Endpoints
         switch (method)
         {
             case CalcMethod.Add:
-                return HttpResponse.Ok((a+b).ToString());
+                return HttpResponse.Ok((a+b).ToString(CultureInfo.InvariantCulture));
             case CalcMethod.Subtract:
-                return HttpResponse.Ok((a-b).ToString());
+                return HttpResponse.Ok((a-b).ToString(CultureInfo.InvariantCulture));
             case CalcMethod.Multiply:
-                return HttpResponse.Ok((a*b).ToString());
+                return HttpResponse.Ok((a*b).ToString(CultureInfo.InvariantCulture));
             case CalcMethod.Divide:
-                return HttpResponse.Ok((a/b).ToString());
+                return HttpResponse.Ok((a/b).ToString(CultureInfo.InvariantCulture));
         }
-        return HttpResponse.Ok((a+b).ToString());
+        return HttpResponse.Ok((a+b).ToString(CultureInfo.InvariantCulture));
     }
     
     [Route("GET", "/auth/{user}")]

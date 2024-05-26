@@ -75,7 +75,7 @@ public class SwaggerGen : ModuleBase
             
             foreach (var p in ep.Info.GetParameters())
             {
-                if (p.Name.ToLower() == "body")
+                if (p.Name?.ToLower() == "body")
                 {
                     e.RequestBody =
                         new OpenApi.Route.Endpoint.BodyRequest(DescribeType(p.ParameterType), !p.HasDefaultValue, null);

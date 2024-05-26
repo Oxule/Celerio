@@ -116,7 +116,18 @@ public class EndpointInvoke
             args[i] = a;
         }
 
-        return (HttpResponse) method.Invoke(null, args);
+        try
+        {
+            HttpResponse invoke = (HttpResponse)method.Invoke(null, args);
+            return invoke;
+        }
+        catch (TargetInvocationException ex)
+        {
+            if(ex.InnerException!=null)
+                throw ex.InnerException;
+            
+            throw new Exception("Unknown Error");
+        }
     }
 
     private string? FindParameter(string key, string body, Dictionary<string, string> query,
