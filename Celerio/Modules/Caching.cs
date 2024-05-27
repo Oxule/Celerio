@@ -38,7 +38,16 @@ public class Caching : ModuleBase
 
     private string HashRequest(HttpRequest request)
     {
-        return request.Method+request.URI;
+        string h = request.Method + request.URI;
+        h += "?";
+        foreach (var p in request.Query)
+        {
+            h += p.Key;
+            h += "="; 
+            h += p.Value;
+            h += "&";
+        }
+        return h;
     }
     
     public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)

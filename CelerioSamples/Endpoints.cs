@@ -102,9 +102,9 @@ public static class Endpoints
         return HttpResponse.Ok(auth["user"]);
     }
     
-    [Cached(5)]
-    [Route("GET", "/cache")]
-    public static HttpResponse Cached(HttpRequest request)
+    [Cached(20)]
+    [Route("GET", "/cache/{a}")]
+    public static HttpResponse Cached(HttpRequest request, string a, string b)
     {
         return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
     }
