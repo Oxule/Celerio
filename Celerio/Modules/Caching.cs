@@ -7,10 +7,14 @@ namespace Celerio;
 public class Cached : Attribute
 {
     public int Delay;
+    public int[] StatusCodes;
 
-    public Cached(int delay)
+    public Cached(int delaySeconds, params int[] statusCodes)
     {
-        Delay = delay;
+        Delay = delaySeconds;
+        StatusCodes = statusCodes;
+        if (statusCodes.Length == 0)
+            StatusCodes = new int[] {200};
     }
 }
 
@@ -20,34 +24,46 @@ public class Caching : ModuleBase
     {
         public HttpResponse? Response;
         public DateTime LastUpdated;
+        public int UsedCount;
+        public DateTime FirstSnapshot;
 
-        public Cache(HttpResponse? response, DateTime lastUpdated)
+        public Cache(HttpResponse? response, DateTime lastUpdated, int usedCount, DateTime firstSnapshot)
         {
             Response = response;
             LastUpdated = lastUpdated;
+            UsedCount = usedCount;
+            FirstSnapshot = firstSnapshot;
         }
 
         public Cache(HttpResponse response)
         {
             Response = response;
             LastUpdated = DateTime.UtcNow;
+            UsedCount = 0;
+            FirstSnapshot = DateTime.UtcNow;
         }
     }
 
-    private Dictionary<string, Cache> caches = new Dictionary<string, Cache>();
+    private Dictionary<string, Cache> Caches = new Dictionary<string, Cache>();
 
+    public int CacheLimitMin = 200;
+    public int CacheLimitMax = 500;
+    
     private string HashRequest(HttpRequest request)
     {
-        string h = request.Method + request.URI;
-        h += "?";
+        var sb = new StringBuilder();
+        sb.Append(request.Method);
+        sb.Append(request.URI);
+        sb.Append('?');
         foreach (var p in request.Query)
         {
-            h += p.Key;
-            h += "="; 
-            h += p.Value;
-            h += "&";
+            sb.Append(p.Key);
+            sb.Append('=');
+            sb.Append(p.Value);
+            sb.Append('&');
         }
-        return h;
+
+        return sb.ToString();
     }
     
     public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
@@ -56,38 +72,60 @@ public class Caching : ModuleBase
         if (attr != null)
         {
             var hash = HashRequest(request);
-            if (!caches.ContainsKey(hash))
-                caches.Add(hash, new Cache(null, DateTime.MinValue));
-
-            if (caches[hash].LastUpdated.AddSeconds(attr.Delay) > DateTime.UtcNow)
+            if (Caches.TryGetValue(hash, out var cache))
             {
-                //Did'nt work for now :(
-                /*
-                if (request.Headers.TryGetValue("If-Modified-Since", out var mod) && DateTime.TryParse(mod, out var modified))
+                if (cache.LastUpdated.AddSeconds(attr.Delay) > DateTime.UtcNow)
                 {
-                    if (modified > caches[hash].LastUpdated)
+                    cache.UsedCount++;
+                    //Did'nt work for now :(
+                    /*
+                    if (request.Headers.TryGetValue("If-Modified-Since", out var mod) && DateTime.TryParse(mod, out var modified))
                     {
-                        return new HttpResponse(304, "Not Modified", new Dictionary<string, string>(), "");
-                    }
-                }*/
-                return caches[hash].Response;
+                        if (modified > caches[hash].LastUpdated)
+                        {
+                            return new HttpResponse(304, "Not Modified", new Dictionary<string, string>(), "");
+                        }
+                    }*/
+                    return cache.Response;
+                }
             }
         }
         return null;
     }
 
+    private void ClearCache()
+    {
+        foreach (var c in Caches.OrderBy(c=>c.Value.UsedCount/(DateTime.UtcNow-c.Value.FirstSnapshot).TotalSeconds).Take(Caches.Count-CacheLimitMin))
+        {
+            Caches.Remove(c.Key);
+        }
+    }
+    
     public override HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth,
         Pipeline pipeline, HttpResponse response)
     {
         var attr = endpoint.Info.GetCustomAttribute<Cached>();
         if (attr != null)
         {
-            var hash = HashRequest(request);
-
-            if (caches[hash].LastUpdated.AddSeconds(attr.Delay) < DateTime.UtcNow)
+            if (attr.StatusCodes.Contains(response.StatusCode))
             {
-                caches[hash].LastUpdated = DateTime.UtcNow;
-                caches[hash].Response = response;
+                var hash = HashRequest(request);
+                if (Caches.TryGetValue(hash, out var cache))
+                {
+                    if (cache.LastUpdated.AddSeconds(attr.Delay) < DateTime.UtcNow)
+                    {
+                        cache.LastUpdated = DateTime.UtcNow;
+                        cache.Response = response;
+                    }
+                }
+                else
+                {
+                    if (Caches.Count > CacheLimitMax)
+                    {
+                        ClearCache();
+                    }
+                    Caches.Add(hash, new Cache(response, DateTime.UtcNow, 0, DateTime.UtcNow));
+                }
             }
         }
         return null;

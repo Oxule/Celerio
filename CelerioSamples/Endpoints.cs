@@ -37,6 +37,12 @@ public static class Endpoints
     {
         return HttpResponse.Ok((a+b).ToString());
     }
+    
+    [Route("GET", "/default")]
+    public static HttpResponse DefaultValues(int a = 5, float b = 5.5f, string c = "ggg", bool d = false)
+    {
+        return HttpResponse.Ok("");
+    }
 
     public record User
     {
@@ -102,14 +108,22 @@ public static class Endpoints
         return HttpResponse.Ok(auth["user"]);
     }
     
-    [Cached(20)]
+    [Cached(60*10, 200)]
     [Route("GET", "/cache/{a}")]
     public static HttpResponse Cached(HttpRequest request, string a, string b)
+    {
+        if(a != "example")
+            return HttpResponse.BadRequest(DateTime.UtcNow.ToString("G"));
+        return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
+    }
+    [Cached(20, 200)]
+    [Route("GET", "/cache/alt/{a}")]
+    public static HttpResponse Cached2(string a)
     {
         return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
     }
     
-    [Cached(60*60*24)]
+    [Cached(60*60*24,200)]
     [Route("GET", "/image/{name}")]
     public static HttpResponse Image(string name)
     {

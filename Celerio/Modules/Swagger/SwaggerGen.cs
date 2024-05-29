@@ -83,7 +83,7 @@ public class SwaggerGen : ModuleBase
                 }
                 if(Parameter.InternalNames.Contains(p.Name.ToLower())||Parameter.InternalTypes.Contains(p.ParameterType))
                     continue;
-                parameters.Add(new OpenApi.Route.Endpoint.Parameter(p.Name,DescribeType(p.ParameterType), !p.HasDefaultValue, null, IsInRoute(p.Name, ep.Routes[0])?"path":"query"));
+                parameters.Add(new OpenApi.Route.Endpoint.Parameter(p.Name,DescribeType(p.ParameterType,p.DefaultValue), !p.HasDefaultValue, null, IsInRoute(p.Name, ep.Routes[0])?"path":"query"));
             }
 
             if (parameters.Count > 0)
@@ -95,13 +95,18 @@ public class SwaggerGen : ModuleBase
         return routes;
     }
     
-    public static OpenApi.Object? DescribeType(Type? type)
+    public static OpenApi.Object? DescribeType(Type? type, object? defaultValue = null)
     {
+        bool hasExample = defaultValue != null;
+        string example = "";
+        if(hasExample)
+            example = defaultValue.ToString();
+        
         if (type == null)
             return null;
         
         if(type == typeof(string))
-            return new OpenApi.ObjectType("string", null, "example");
+            return new OpenApi.ObjectType("string", null, hasExample?example:"example");
         
         if (type.Name == "Nullable`1")
         {
@@ -140,21 +145,21 @@ public class SwaggerGen : ModuleBase
                 enums.Add(e);
             }
 
-            return new OpenApi.ObjectType("string", null, enums[0], enums);
+            return new OpenApi.ObjectType("string", null, hasExample?example:enums[0], enums);
         }
         
         //TODO: Expand List
         if(type == typeof(int)||type == typeof(long))
-            return new OpenApi.ObjectType("integer", null, "123");
+            return new OpenApi.ObjectType("integer", null, hasExample?example:"123");
         
         if(type == typeof(float)||type == typeof(double))
-            return new OpenApi.ObjectType("number", null, "12.34");
+            return new OpenApi.ObjectType("number", null, hasExample?example:"12.34");
         
         if(type == typeof(bool))
-            return new OpenApi.ObjectType("boolean", null, "true");
+            return new OpenApi.ObjectType("boolean", null, hasExample?example:"true");
         
         if(type == typeof(DateTime))
-            return new OpenApi.ObjectType("date", null, "2021-01-01T13:02:22.95467");
+            return new OpenApi.ObjectType("date", null, hasExample?example:"2021-01-01T13:02:22.95467");
         
         return null;
     }
