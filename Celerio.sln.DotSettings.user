@@ -1,11 +1,10 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=0135f14b_002D15b9_002D4c66_002D801a_002D87d97c2045ba/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Http11Test" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.Http11&lt;/TestId&gt;&#xD;
-  &lt;/TestAncestor&gt;&#xD;
-&lt;/SessionState&gt;</s:String>
+	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005Cpackage_005CCelerio_002E1_002E0_002E5_002Enupkg/@EntryIndexedValue">True</s:Boolean>
+	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=1b241b54_002D35a7_002D44ca_002Db039_002Dc5dd9ad2f733/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="PathMatching" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.PathMatching&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.OpenApi.Test1&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.StaticDirectory.Directory_PERFECT&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

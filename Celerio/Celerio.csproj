@@ -22,20 +22,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="swagger-ui/*.*">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <Pack>true</Pack>
-            <IncludeInPackage>true</IncludeInPackage>
-            <CopyToOutput>true</CopyToOutput>
-            <BuildAction>Content</BuildAction>
-            <copyToOutput>true</copyToOutput>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-            <PackageCopyToOutput>true</PackageCopyToOutput>
-        </Content>
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 </Project>
