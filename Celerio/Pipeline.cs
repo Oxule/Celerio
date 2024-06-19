@@ -13,10 +13,10 @@ public class ModuleBase
     public virtual HttpResponse? AfterRequest(HttpRequest request, Pipeline pipeline) { return null;}
     
     public virtual HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        Dictionary<string, string> auth, Pipeline pipeline) { return null;}
+        object? auth, Pipeline pipeline) { return null;}
     
     public virtual HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        Dictionary<string, string> auth, Pipeline pipeline, HttpResponse response) { return null;}
+        object? auth, Pipeline pipeline, HttpResponse response) { return null;}
 }
 
 public class Pipeline
@@ -27,7 +27,7 @@ public class Pipeline
     
     public EndpointInvoke EndpointInvoke = new ();
     
-    public IAuthentification Authentification = new DefaultAuthentification("SampleKey", "SampleSalt");
+    public IAuthentification Authentification = new DefaultAuthentification("SampleKey");
     
     public List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching()};
     
@@ -93,7 +93,7 @@ public class Pipeline
             ep.Info, request, parameters,
             new (typeof(HttpRequest), request),
             new (typeof(Pipeline), this),
-            new (typeof(Dictionary<string, string>), identity, "auth"));
+            new (Authentification.DataType, identity, "auth"));
 
         foreach (var module in Modules)
         {

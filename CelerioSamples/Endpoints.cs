@@ -95,17 +95,17 @@ public static class Endpoints
         return HttpResponse.Ok((a+b).ToString(CultureInfo.InvariantCulture));
     }
     
-    [Route("GET", "/auth/{user}")]
-    public static HttpResponse Auth(string user, Pipeline pipeline)
+    [Route("GET", "/auth/code")]
+    public static HttpResponse Auth(int x, float y, bool z, string str, Pipeline pipeline)
     {
-        return pipeline.Authentification.SendAuthentification(new Dictionary<string, string>() {{"user", user}});
+        return pipeline.Authentification.SendAuthentification((x, y, z, str));
     }
     
     [Authentificated]
     [Route("GET", "/auth")]
-    public static HttpResponse AuthCheck(Dictionary<string, string> auth)
+    public static HttpResponse AuthCheck((int x, float y, bool z, string str) auth)
     {
-        return HttpResponse.Ok(auth["user"]);
+        return HttpResponse.Ok(JsonConvert.SerializeObject(auth));
     }
     
     [Cached(60*10, 200)]

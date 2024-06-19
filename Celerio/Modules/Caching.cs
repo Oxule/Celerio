@@ -66,7 +66,7 @@ public class Caching : ModuleBase
         return sb.ToString();
     }
     
-    public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth, Pipeline pipeline)
+    public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, object? auth, Pipeline pipeline)
     {
         var attr = endpoint.Info.GetCustomAttribute<Cached>();
         if (attr != null)
@@ -101,7 +101,7 @@ public class Caching : ModuleBase
         }
     }
     
-    public override HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, Dictionary<string, string> auth,
+    public override HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, object? auth,
         Pipeline pipeline, HttpResponse response)
     {
         var attr = endpoint.Info.GetCustomAttribute<Cached>();
