@@ -27,14 +27,14 @@ public class StaticFiles : ModuleBase
     }
 
 
-    public override HttpResponse? AfterRequest(HttpRequest request, Pipeline pipeline)
+    public override HttpResponse? AfterRequest(Context context)
     {
-        if (request.Method != "GET") 
+        if (context.Request.Method != "GET") 
             return null;
         
         foreach (var file in Files)
         {
-            if (file.Key != request.URI)
+            if (file.Key != context.Request.URI)
                 continue;
 
             return HttpResponse.File(new FileStream(file.Value.Path, FileMode.Open, FileAccess.Read), file.Value.ContentType);

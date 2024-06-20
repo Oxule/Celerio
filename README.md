@@ -14,7 +14,7 @@ Just install nuget package `https://www.nuget.org/packages/Celerio`
 2. If you're going to use authentication, then change crypto keys
 
 ```csharp
-    pipeline.Authentification = new DefaultAuthentification("key", "salt");
+    pipeline.Authentification = new DefaultAuthentification("Your Unknown Secret Key");
 ```
 
 3. Configure pipeline any way you want (e.g. Change authentification scheme or add IP blacklist)
@@ -22,10 +22,10 @@ Just install nuget package `https://www.nuget.org/packages/Celerio`
 4. Create anywhere an endpoint for e.g.
 
 ```csharp
-    [Route("GET", "/sum", "/add", "/add/{a}/{b}", "/sum/{a}/{b}")]
-    public static HttpResponse Sum(int a, int b)
+    [Route("GET", "/sum")]
+    public static int Sum(int a, int b)
     {
-        return HttpResponse.Ok((a+b).ToString());
+        return a+b;
     }
 ```
 

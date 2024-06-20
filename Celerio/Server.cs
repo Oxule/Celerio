@@ -9,11 +9,10 @@ public class Server
 
     public async Task StartListening(int port)
     {
-        Pipeline.Initialize();
         Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         socket.Bind(new IPEndPoint(IPAddress.Any, port));
         socket.Listen();
-        Logging.Log($"Server Started At localhost:{port}");
+        Logging.Log($"Server Started At http://localhost:{port}");
         while (true)
         {
             var a = await socket.AcceptAsync();

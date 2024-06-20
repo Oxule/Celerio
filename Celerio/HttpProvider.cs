@@ -1,18 +1,16 @@
-﻿using System.Text;
+﻿using System.Net.Sockets;
+using System.Text;
 
 namespace Celerio;
 
 public interface IHttpProvider
 {
-    public string ErrorMessage { get; }
-    public bool GetRequest(Stream stream, out HttpRequest request);
-    public void SendResponse(Stream stream, HttpResponse response);
+    public bool GetRequest(NetworkStream stream, out HttpRequest request);
+    public void SendResponse(NetworkStream stream, HttpResponse response);
 }
 public class Http11ProtocolProvider : IHttpProvider
 {
-    public string ErrorMessage { get; } = "HTTP/1.1 400 Protocol Not Supported";
-    
-    public bool GetRequest(Stream stream, out HttpRequest request)
+    public bool GetRequest(NetworkStream stream, out HttpRequest request)
     {
         string uri = "";
         request = new HttpRequest();
@@ -39,7 +37,7 @@ public class Http11ProtocolProvider : IHttpProvider
                 if (l == "")
                     break;
                 var p = l.Split(": ");
-                if (request.Headers.ContainsKey(p[0]))
+                if (request.Headers.Contains(p[0]))
                     return false;
                 request.Headers.Add(p[0], string.Join(": ", p.Skip(1)));
             }
@@ -47,7 +45,7 @@ public class Http11ProtocolProvider : IHttpProvider
             pointer += l.Length + 1;
         }
         
-        if (request.Headers.TryGetValue("Content-Length", out var contentLength)&&int.TryParse(contentLength, out var length)&&length>0)
+        if (request.Headers.TryGet("Content-Length", out var contentLength)&&int.TryParse(contentLength[0], out var length)&&length>0)
         {
             byte[] buffer = new byte[length];
             if (stream.Read(buffer, 0, length) != length)
@@ -78,7 +76,7 @@ public class Http11ProtocolProvider : IHttpProvider
         return true;
     }
 
-    private static string? ReadLineStream(Stream stream)
+    private static string? ReadLineStream(NetworkStream stream)
     {
         List<byte> buffer = new List<byte>();
         while (true)
@@ -153,46 +151,24 @@ public class Http11ProtocolProvider : IHttpProvider
         }
         throw new ArgumentException("Input HEX not a byte");
     }
-    
-    private void DefaultHeaders(HttpResponse resp)
-    {
-        List<KeyValuePair<string, string>> headers = new List<KeyValuePair<string, string>>()
-        {
-            new ("Server", "Celerio/1.0"),
-            new ("Connection", "close"),
-            new ("Date", DateTime.UtcNow.ToString("r")),
-        };
 
-        foreach (var header in headers)
-        {
-            if(!resp.Headers.ContainsKey(header.Key))
-                resp.Headers.Add(header.Key, header.Value);
-        }
-    }
-    
-    public void SendResponse(Stream stream, HttpResponse response)
+    public void SendResponse(NetworkStream stream, HttpResponse response)
     {
-        byte[] body;
-        if(response.BodyRaw != null && response.BodyRaw.Length > 0)
-            body = response.BodyRaw;
-        else
-            body = Encoding.UTF8.GetBytes(response.Body);
-        DefaultHeaders(response); 
-        if (!response.Headers.ContainsKey("Content-Length"))
-            response.Headers.Add("Content-Length", body.Length.ToString());
-        
-        if (!response.Headers.ContainsKey("Content-Type"))
-            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-        
-        var writer = new StreamWriter(stream);
-        writer.WriteLine($"HTTP/1.1 {response.StatusCode} {response.StatusMessage}");
+        response.PostProcess();
+        stream.Write(Encoding.ASCII.GetBytes($"HTTP/1.1 {response.StatusCode} {response.StatusMessage}\n"));
         foreach (var header in response.Headers)
         {
-            writer.WriteLine($"{header.Key}: {header.Value}");
+            foreach (var v in header.Value)
+            {
+                stream.Write(Encoding.ASCII.GetBytes($"{header.Key}: {v}\n"));
+            }
         }
-        writer.WriteLine();
-        writer.Flush();
-        stream.Write(body, 0, body.Length);
-        stream.Flush();
+
+        stream.WriteByte((byte)'\n');
+        
+        if (response.Body != null)
+        {
+            stream.Write(response.Body, 0, response.Body.Length);
+        }
     }
 }

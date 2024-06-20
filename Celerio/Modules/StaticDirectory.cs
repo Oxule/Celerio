@@ -5,7 +5,7 @@ public class StaticDirectory : StaticFiles
     public string Route;
     public string Directory;
 
-    public void Index()
+    public override void Initialize(Pipeline pipeline)
     {
         Files = new Dictionary<string, StaticFile>();
         foreach (var file in System.IO.Directory.GetFiles(Directory))
@@ -21,6 +21,5 @@ public class StaticDirectory : StaticFiles
     {
         Route = route;
         Directory = directory;
-        Index();
     }
 }

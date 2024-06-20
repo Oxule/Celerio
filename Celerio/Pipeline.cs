@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -10,94 +11,98 @@ public class ModuleBase
 {
     public virtual void Initialize(Pipeline pipeline){}
 
-    public virtual HttpResponse? AfterRequest(HttpRequest request, Pipeline pipeline) { return null;}
+    public virtual HttpResponse? AfterRequest(Context context) { return null;}
     
-    public virtual HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        object? auth, Pipeline pipeline) { return null;}
+    public virtual HttpResponse? BeforeEndpoint(Context context) { return null;}
     
-    public virtual HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters,
-        object? auth, Pipeline pipeline, HttpResponse response) { return null;}
+    public virtual HttpResponse? AfterEndpoint(Context context, HttpResponse response) { return null;}
 }
 
 public class Pipeline
 {
     public IHttpProvider HttpProvider = new Http11ProtocolProvider();
     
-    public EndpointRouter EndpointRouter = new ();
-    
-    public EndpointInvoke EndpointInvoke = new ();
-    
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey");
+
+    public void SetAuthDataType(Type type)
+    {
+        Authentification.DataType = type;
+    }
     
-    public List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching()};
+    private EndpointManager _endpointManager = new ();
     
-    public void ProcessRequest(Stream stream)
+    internal List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching(), new CorsBlocker()};
+
+    internal CORS Cors = new ();
+
+    public void AddAllowedCORS(string origin)
+    {
+        Cors.Allowed.Add(origin);
+    }
+    
+    public Pipeline AddModule(ModuleBase module)
+    {
+        module.Initialize(this);
+        Modules.Add(module);
+        return this;
+    }
+    
+    internal void ProcessRequest(NetworkStream stream)
     {
         try
         {
-            if (!HttpProvider.GetRequest(stream, out var request))
+            while (true)
             {
-                Logging.Warn("Error While Parsing Protocol. Disconnecting...");
-                stream.Write(Encoding.UTF8.GetBytes(HttpProvider.ErrorMessage));
-                stream.Flush();
-                stream.Close();
-                return;
-            }
-            Logging.Log($"Request Parsed Successfully: {request.Method} {request.URI}");
-            HttpResponse resp;
-            try
-            {
-                resp = PipelineExecution(request);
+                if (!HttpProvider.GetRequest(stream, out var request))
+                {
+                    Logging.Warn($"({stream.Socket.RemoteEndPoint})Error While Parsing Protocol. Disconnecting...");
+                    stream.Close();
+                    return;
+                }
+                Stopwatch sw = new Stopwatch();
+                sw.Restart();
+                Logging.Log($"({stream.Socket.RemoteEndPoint})Request Parsed Successfully: {request.Method} {request.URI}");
+                var resp = PipelineExecution(request);
                 HttpProvider.SendResponse(stream, resp);
-                stream.Close();
-            }
-            catch (Exception e)
-            {
-                resp = new HttpResponse(500, "Internal Server Error", new Dictionary<string, string>(), e.Message);
-                HttpProvider.SendResponse(stream, resp); 
-                Logging.Err(e.Message + '\n' + e.StackTrace);
-                stream.Close();
+                Logging.Log($"({stream.Socket.RemoteEndPoint})Response Sent in {sw.ElapsedMilliseconds}ms ({sw.ElapsedTicks}t)!");
             }
         }
         catch (Exception e)
         {
-            Logging.Err(e.Message + '\n' + e.StackTrace);
             stream.Close();
         }
     }
 
-    public HttpResponse PipelineExecution(HttpRequest request)
+    private HttpResponse PipelineExecution(HttpRequest request)
     {
+        Context context = new Context(this, request);
         foreach (var module in Modules)
         {
-            var resp = module.AfterRequest(request, this);
+            var resp = module.AfterRequest(context);
             if (resp != null)
                 return resp;
         }
         
-        var ep = EndpointRouter.GetEndpoint(request, out var parameters);
+        context.Identity = Authentification.Authentificate(request);
 
-        if(ep == null)
-            return new HttpResponse(404, "Not Found", new Dictionary<string, string>(), "Not Found");
+        var ep = _endpointManager.GetEndpoint(context.Request, out var pathParameters);
+        if (ep == null)
+            return HttpResponse.NotFound();
         
-        var identity = Authentification.Authentificate(request);
-
+        context.Endpoint = ep;
+        
         foreach (var module in Modules)
         {
-            var resp = module.BeforeEndpoint(request, ep, parameters, identity, this);
+            var resp = module.BeforeEndpoint(context);
             if (resp != null)
                 return resp;
         }
         
-        var response = EndpointInvoke.Invoke(
-            ep.Info, request, parameters,
-            new (typeof(HttpRequest), request),
-            new (typeof(Pipeline), this),
-            new (Authentification.DataType, identity, "auth"));
+        var response = _endpointManager.CallEndpoint(context, pathParameters);
 
         foreach (var module in Modules)
         {
-            var resp = module.AfterEndpoint(request, ep, parameters, identity, this, response);
+            var resp = module.AfterEndpoint(context, response);
             if (resp != null)
                 return resp;
         }
@@ -107,19 +112,5 @@ public class Pipeline
 
     public Pipeline()
     {
-        JsonConvert.DefaultSettings = (() =>
-        {
-            var settings = new JsonSerializerSettings();
-            settings.Converters.Add(new StringEnumConverter { NamingStrategy = new DefaultNamingStrategy()});
-            return settings;
-        });
-    }
-
-    public void Initialize()
-    {
-        for (int i = 0; i < Modules.Count; i++)
-        {
-            Modules[i].Initialize(this);
-        }
     }
 }

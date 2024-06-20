@@ -18,25 +18,12 @@ public class Response : Attribute
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public class Route : Attribute
 {
-    public string Method { get; set; }
-    public string[] URI { get; set; }
+    public string Method { get; }
+    public string Pattern { get; }
 
-    public Route(string method, params string[] uri)
+    public Route(string method, string pattern)
     {
         Method = method;
-        URI = uri;
-    }
-} 
-
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class Service : Attribute
-{
-    public string Name { get; set; }
-    public string Description { get; set; }
-
-    public Service(string name, string description = "")
-    {
-        Name = name;
-        Description = description;
+        Pattern = pattern;
     }
 } 

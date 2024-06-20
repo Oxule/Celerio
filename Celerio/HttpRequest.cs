@@ -5,16 +5,16 @@ public class HttpRequest
     public string Method { get; set; }
     public string URI { get; set; }
     public Dictionary<string, string> Query { get; set; }
-    public Dictionary<string, string> Headers { get; set; }
+    public HeadersCollection Headers { get; set; }
     public byte[]? BodyRaw { get; set; }
     public string? Body { get; set; }
 
     public string? GetCookie(string key)
     {
-        if (!Headers.TryGetValue("Cookie", out var cookie))
+        if (!Headers.TryGet("Cookie", out var cookie))
             return null;
 
-        foreach (var c in cookie.Split("; "))
+        foreach (var c in cookie[0].Split("; "))
         {
             if(c.Length <= key.Length)
                 continue;
@@ -41,6 +41,6 @@ public class HttpRequest
     public HttpRequest()
     {
         Query = new Dictionary<string, string>();
-        Headers = new Dictionary<string, string>();
+        Headers = new ();
     }
 }

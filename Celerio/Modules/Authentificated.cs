@@ -6,12 +6,12 @@ public class Authentificated : Attribute { }
 
 public class AuthentificatedCheck : ModuleBase
 {
-    public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, object? auth, Pipeline pipeline)
+    public override HttpResponse? BeforeEndpoint(Context context)
     {
-        var attr = endpoint.Info.GetCustomAttribute<Authentificated>();
+        var attr = context.Endpoint.Method.GetCustomAttribute<Authentificated>();
         if (attr != null)
         {
-            if (auth == null)
+            if (context.Identity == null)
                 return HttpResponse.Unauthorized();
         }
         return null;

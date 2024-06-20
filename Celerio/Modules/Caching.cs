@@ -66,18 +66,18 @@ public class Caching : ModuleBase
         return sb.ToString();
     }
     
-    public override HttpResponse? BeforeEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, object? auth, Pipeline pipeline)
+    public override HttpResponse? BeforeEndpoint(Context context)
     {
-        var attr = endpoint.Info.GetCustomAttribute<Cached>();
+        var attr = context.Endpoint.Method.GetCustomAttribute<Cached>();
         if (attr != null)
         {
-            var hash = HashRequest(request);
+            var hash = HashRequest(context.Request);
             if (Caches.TryGetValue(hash, out var cache))
             {
                 if (cache.LastUpdated.AddSeconds(attr.Delay) > DateTime.UtcNow)
                 {
                     cache.UsedCount++;
-                    //Did'nt work for now :(
+                    //TODO: Did'nt work for now :(
                     /*
                     if (request.Headers.TryGetValue("If-Modified-Since", out var mod) && DateTime.TryParse(mod, out var modified))
                     {
@@ -101,15 +101,14 @@ public class Caching : ModuleBase
         }
     }
     
-    public override HttpResponse? AfterEndpoint(HttpRequest request, EndpointRouter.Endpoint endpoint, Dictionary<string, string> parameters, object? auth,
-        Pipeline pipeline, HttpResponse response)
+    public override HttpResponse? AfterEndpoint(Context context, HttpResponse response)
     {
-        var attr = endpoint.Info.GetCustomAttribute<Cached>();
+        var attr = context.Endpoint.Method.GetCustomAttribute<Cached>();
         if (attr != null)
         {
             if (attr.StatusCodes.Contains(response.StatusCode))
             {
-                var hash = HashRequest(request);
+                var hash = HashRequest(context.Request);
                 if (Caches.TryGetValue(hash, out var cache))
                 {
                     if (cache.LastUpdated.AddSeconds(attr.Delay) < DateTime.UtcNow)

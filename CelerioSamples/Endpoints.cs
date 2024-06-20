@@ -4,46 +4,56 @@ using Newtonsoft.Json;
 
 namespace CelerioSamples;
 
-[Service("SampleService", "Sample Description")]
 public static class Endpoints
 {
     [Route("GET", "/")]
-    public static HttpResponse Index(HttpRequest request)
+    public static HttpResponse Index()
     {
         return HttpResponse.Ok("Hello! This is Celerio Sample!");
     }
-
-
+    
+    [Route("GET", "/ping")]
+    public static HttpResponse Ping()
+    {
+        return HttpResponse.Ok("");
+    }
+    
     public enum SampleEnum
     {
         A,
         B
     }
     [Route("GET", "/enum")]
-    public static HttpResponse EnumTest(SampleEnum e)
+    public static string EnumTest(SampleEnum e)
     {
         switch (e)
         {
             case SampleEnum.A:
-                return HttpResponse.Ok("AHAHAHA it works");
+                return "It's A enum";
             case SampleEnum.B:
-                return HttpResponse.Ok("AHAHAHA it works but B");
+                return "It's B enum";
         }
-        return HttpResponse.Ok("Awwww..");
+        return "Awwww..";
     }
     
-    [Route("GET", "/sum", "/add", "/add/{a}/{b}", "/sum/{a}/{b}")]
-    public static HttpResponse Sum(int a, int b)
+    [Route("GET", "/sum")]
+    public static int Sum(int a, int b)
     {
-        return HttpResponse.Ok((a+b).ToString());
+        return a+b;
     }
     
-    [Route("GET", "/default")]
-    public static HttpResponse DefaultValues(int a = 5, float b = 5.5f, string c = "ggg", bool d = false)
+    [Route("GET", "/force")]
+    public static float Force(float mass, float g = 10)
     {
-        return HttpResponse.Ok("");
+        return mass*g;
     }
 
+    [Route("GET", "/path/{id}/{name}")]
+    public static (int id, string name) Path(int id, string name)
+    {
+        return (id, name);
+    }
+    
     public record User
     {
         public string Name;
@@ -51,22 +61,28 @@ public static class Endpoints
     }
     
     [Route("POST", "/user")]
-    public static HttpResponse user(User body)
+    public static User user(User body)
     {
-        return HttpResponse.Ok(body.Name);
+        return body;
+    }
+
+    [Route("GET", "/custom")]
+    public static HttpResponse CustomResponse()
+    {
+        return new HttpResponse(228, "Super Custom Response").SetBody("Super Puper Mega Duper Custom Body")
+            .AddHeader("Custom-Header", "Custom Value 1").AddHeader("Custom-Header", "Custom Value 2");
     }
     
     [Route("GET", "/unicode")]
-    public static HttpResponse unicodeTest(string line)
+    public static string unicodeTest(string line)
     {
-        return HttpResponse.Ok(line);
+        return line;
     }
     
-    [Response(200, "OK", typeof(User))]
     [Route("GET", "/user")]
-    public static HttpResponse getUser()
+    public static User getUser()
     {
-        return HttpResponse.Ok(JsonConvert.SerializeObject(new User { Name = "John", Age = 30 }));
+        return new User { Name = "John", Age = 30 };
     }
 
     public enum CalcMethod
@@ -77,56 +93,41 @@ public static class Endpoints
         Divide
     }
     
-    [Response(200, "Successfully calculated", typeof(float))]
-    [Route("GET", "/calc/{method}/{a}/{b}", "/calc/{method}")]
-    public static HttpResponse Calc(float a, float b, CalcMethod method)
+    [Route("GET", "/calc/{method}")]
+    public static float Calc(float a, float b, CalcMethod method)
     {
         switch (method)
         {
             case CalcMethod.Add:
-                return HttpResponse.Ok((a+b).ToString(CultureInfo.InvariantCulture));
+                return a+b;
             case CalcMethod.Subtract:
-                return HttpResponse.Ok((a-b).ToString(CultureInfo.InvariantCulture));
+                return a-b;
             case CalcMethod.Multiply:
-                return HttpResponse.Ok((a*b).ToString(CultureInfo.InvariantCulture));
+                return a*b;
             case CalcMethod.Divide:
-                return HttpResponse.Ok((a/b).ToString(CultureInfo.InvariantCulture));
+                return a/b;
         }
-        return HttpResponse.Ok((a+b).ToString(CultureInfo.InvariantCulture));
+        return 54;
     }
     
-    [Route("GET", "/auth/code")]
-    public static HttpResponse Auth(int x, float y, bool z, string str, Pipeline pipeline)
+    [Route("GET", "/auth/{x}")]
+    public static HttpResponse Auth(long x, Context context)
     {
-        return pipeline.Authentification.SendAuthentification((x, y, z, str));
+        return context.Pipeline.Authentification.SendAuthentification(x);
     }
     
-    [Authentificated]
     [Route("GET", "/auth")]
-    public static HttpResponse AuthCheck((int x, float y, bool z, string str) auth)
+    public static object AuthCheck(Context context)
     {
-        return HttpResponse.Ok(JsonConvert.SerializeObject(auth));
+        if (context.Identity == null)
+            return HttpResponse.Unauthorized();
+        return (long)context.Identity;
     }
     
-    [Cached(60*10, 200)]
-    [Route("GET", "/cache/{a}")]
-    public static HttpResponse Cached(HttpRequest request, string a, string b)
-    {
-        if(a != "example")
-            return HttpResponse.BadRequest(DateTime.UtcNow.ToString("G"));
-        return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
-    }
     [Cached(20, 200)]
-    [Route("GET", "/cache/alt/{a}")]
-    public static HttpResponse Cached2(string a)
+    [Route("GET", "/cache")]
+    public static HttpResponse Cached()
     {
         return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
-    }
-    
-    [Cached(60*60*24,200)]
-    [Route("GET", "/image/{name}")]
-    public static HttpResponse Image(string name)
-    {
-        return HttpResponse.File(name, "image/jpeg");
     }
 }
