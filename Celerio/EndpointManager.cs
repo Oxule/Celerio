@@ -120,19 +120,29 @@ public class EndpointManager
                 if (path != null)
                 {
                     param = path;
+                    goto paramFound;
                 }
-                else if (context.Request.Query.TryGetValue(parameters[i].Name, out var query))
+                if (context.Request.Query.TryGetValue(parameters[i].Name, out var query))
                 {
                     param = query;
+                    goto paramFound;
                 }
-                else if (parameters[i].HasDefaultValue)
+                if (parameters[i].HasDefaultValue)
                 {
                     args[i] = parameters[i].DefaultValue;
                     continue;
                 }
-                else
-                    return HttpResponse.BadRequest($"Parameter {parameters[i].Name} didn't specified!");
+                if (parameters[i].Name == "body")
+                {
+                    if(string.IsNullOrEmpty(context.Request.Body))
+                        return HttpResponse.BadRequest("Body is empty");
+                    param = context.Request.Body;
+                    goto paramFound;
+                }
+                return HttpResponse.BadRequest($"Parameter {parameters[i].Name} didn't specified!");
 
+                paramFound:
+                
                 if (parameters[i].ParameterType == typeof(string))
                     args[i] = param;
                 else
