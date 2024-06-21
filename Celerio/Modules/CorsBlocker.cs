@@ -13,8 +13,10 @@ public class CorsBlocker : ModuleBase
         {
             if (context.Pipeline.Cors.Allowed.Contains(v[0]))
                 return null;
+            return HttpResponse.Forbidden().AddCorsHeaders(context.Pipeline.Cors);
         }
-        return HttpResponse.Forbidden().AddCorsHeaders(context.Pipeline.Cors);
+
+        return null;
     }
 
     public override HttpResponse? AfterEndpoint(Context context, HttpResponse response)
