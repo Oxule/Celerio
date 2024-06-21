@@ -168,6 +168,8 @@ public class EndpointManager
         }
         catch (Exception e)
         {
+            if(e.InnerException != null)
+                return HttpResponse.InternalServerError(e.InnerException.Message+'\n'+e.InnerException.StackTrace);
             return HttpResponse.InternalServerError(e.Message+'\n'+e.StackTrace);
         }
     }
