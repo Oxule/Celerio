@@ -8,8 +8,18 @@ public class HeadersCollection : IEnumerable<KeyValuePair<string, List<string>>>
 
     public List<string> this[string key]
     {
-        get => _headers[key];
-        set => _headers[key] = value;
+        get
+        {
+            if (_headers.TryGetValue(key, out var value))
+                return value;
+            return new List<string>();
+        }
+        set
+        {
+            if (!_headers.ContainsKey(key))
+                _headers[key] = new List<string>();
+            _headers[key] = value;
+        }
     }
     
     public void Add(string key, string value)
