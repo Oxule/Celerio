@@ -4,7 +4,7 @@ var pipeline = new Pipeline();
 
 pipeline.Authentification = new DefaultAuthentification("Your Unknown Secret Key");
 
-pipeline.Cors.AddOrigin("https://google.com");
+pipeline.Cors.AddOrigin("https://www.google.com").AddOrigin("http://localhost:3000");
 
 pipeline.SetAuthDataType(typeof(long));
 

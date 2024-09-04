@@ -5,13 +5,13 @@ public class CorsFilter : ModuleBase
     public override HttpResponse? AfterRequest(Context context)
     {
         if (context.Request.Method == "OPTIONS")
-            return HttpResponse.Ok("").AddCorsHeaders(context.Pipeline.Cors);
+            return HttpResponse.Ok("").AddCorsHeaders(context.Pipeline.Cors, context.Request.Headers["Origin"].FirstOrDefault());
         return null;
     }
 
     public override HttpResponse? AfterEndpoint(Context context, HttpResponse response)
     {
-        response.AddCorsHeaders(context.Pipeline.Cors);
+        response.AddCorsHeaders(context.Pipeline.Cors, context.Request.Headers["Origin"].FirstOrDefault());
         return null;
     }
 }

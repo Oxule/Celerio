@@ -37,12 +37,19 @@ public class CORS
         return this;
     }
     
-    public void AddHeaders(HeadersCollection headers)
+    public void AddHeaders(HeadersCollection headers, string? origin = null)
     {
         headers.Add("Access-Control-Allow-Credentials", Credentials.ToString().ToLower());
-        if(AllowedOrigins.Count != 0)
-            headers.Add("Access-Control-Allow-Origin", string.Join(", ", AllowedOrigins.ToArray()));
-        
+
+        if (AllowedOrigins.Count > 0)
+        {
+            string preferOrigin = AllowedOrigins[0];
+            if (origin != null && AllowedOrigins.Contains(origin))
+                preferOrigin = origin;
+            
+            headers.Add("Access-Control-Allow-Origin", preferOrigin);
+        }
+
         headers.Add("Access-Control-Allow-Headers", string.Join(", ", AllowedHeaders));
         headers.Add("Access-Control-Allow-Methods", string.Join(", ", AllowedMethods));
     }
@@ -50,9 +57,9 @@ public class CORS
 
 public static class CORSExtention
 {
-    public static HttpResponse AddCorsHeaders(this HttpResponse resp, CORS cors)
+    public static HttpResponse AddCorsHeaders(this HttpResponse resp, CORS cors, string? origin = null)
     {
-        cors.AddHeaders(resp.Headers);
+        cors.AddHeaders(resp.Headers, origin);
         return resp;
     }
 }
