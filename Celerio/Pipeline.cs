@@ -31,7 +31,7 @@ public class Pipeline
     
     private EndpointManager _endpointManager = new ();
     
-    internal List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching(), new CorsBlocker()};
+    internal List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
 
     public CORS Cors = new ();
     

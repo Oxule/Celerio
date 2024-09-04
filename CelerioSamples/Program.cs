@@ -4,8 +4,7 @@ var pipeline = new Pipeline();
 
 pipeline.Authentification = new DefaultAuthentification("Your Unknown Secret Key");
 
-pipeline.Cors.Credentials = true;
-pipeline.Cors.AddOrigin("https://habr.com");
+pipeline.Cors.AddOrigin("https://google.com");
 
 pipeline.SetAuthDataType(typeof(long));
 
