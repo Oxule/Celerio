@@ -33,12 +33,7 @@ public class Pipeline
     
     internal List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching(), new CorsBlocker()};
 
-    internal CORS Cors = new ();
-
-    public void AddAllowedCORS(string origin)
-    {
-        Cors.Allowed.Add(origin);
-    }
+    public CORS Cors = new ();
     
     public Pipeline AddModule(ModuleBase module)
     {

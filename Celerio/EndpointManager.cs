@@ -102,7 +102,7 @@ public class EndpointManager
 
     public HttpResponse CallEndpoint(Context context, string[] pathParameters)
     {
-        var parameters = context.Endpoint.Method.GetParameters();
+        var parameters = context.Endpoint!.Method.GetParameters();
         object?[] args = new object?[parameters.Length];
         for (int i = 0; i < args.Length; i++)
         {

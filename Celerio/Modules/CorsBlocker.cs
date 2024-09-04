@@ -7,11 +7,11 @@ public class CorsBlocker : ModuleBase
         if (context.Request.Method == "OPTIONS")
             return HttpResponse.Ok("").AddCorsHeaders(context.Pipeline.Cors);
         
-        if (context.Pipeline.Cors.Allowed.Contains("*"))
+        if (context.Pipeline.Cors.AllowedOrigins.Contains("*"))
             return null;
         if (context.Request.Headers.TryGet("Origin", out var v))
         {
-            if (context.Pipeline.Cors.Allowed.Contains(v[0]))
+            if (context.Pipeline.Cors.AllowedOrigins.Contains(v[0]))
                 return null;
             return HttpResponse.Forbidden().AddCorsHeaders(context.Pipeline.Cors);
         }

@@ -62,7 +62,7 @@ public class DefaultAuthentification : IAuthentification
         Array.Copy(hash, code, 64);
         Array.Copy(preHash, 0, code, 64, preHash.Length);
         var token = Convert.ToBase64String(code);
-        return new HttpResponse(200, "OK").AddHeader("Set-Cookie", $"auth={token}; HttpOnly; Max-Age={(long)TokenExpiration.TotalSeconds}; Path=/");
+        return new HttpResponse(200, "OK").AddHeader("Set-Cookie", $"auth={token}; HttpOnly; Max-Age={(long)TokenExpiration.TotalSeconds}; Path=/; Secure");
     }
     
     public byte[] Encrypt(byte[] array)
