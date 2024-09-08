@@ -61,12 +61,18 @@ public class Http11ProtocolProvider : IHttpProvider
             foreach (var qq in q[1].Split('&'))
             {
                 var p = qq.Split('=');
-                if (p.Length != 2)
+                if (p.Length < 2)
                     return false;
+                string value;
+                if (p.Length == 2)
+                    value = p[1];
+                else
+                    value = string.Join('=', p, 1, p.Length - 1);
+                
                 if (request.Query.ContainsKey(p[0]))
                     return false;
                 
-                request.Query.Add(p[0], p[1]);
+                request.Query.Add(p[0], value);
             }
         }
 

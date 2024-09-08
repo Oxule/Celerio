@@ -18,6 +18,12 @@ public static class Endpoints
         return HttpResponse.Ok("");
     }
     
+    [Route("GET", "/echo")]
+    public static HttpResponse Ping(string message)
+    {
+        return HttpResponse.Ok(message);
+    }
+    
     public enum SampleEnum
     {
         A,
