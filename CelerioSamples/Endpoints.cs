@@ -120,7 +120,7 @@ public static class Endpoints
     public static object AuthCheck(Context context)
     {
         if (context.Identity == null)
-            return HttpResponse.Unauthorized();
+            return "None";
         return (long)context.Identity;
     }
     
