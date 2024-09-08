@@ -40,9 +40,6 @@ public class DefaultAuthentification : IAuthentification
 
         if (token == null)
             return null;
-
-        if (token.Until <= DateTime.UtcNow)
-            return null;
         
         return token.Data;
     }

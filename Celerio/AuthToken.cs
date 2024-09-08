@@ -56,8 +56,13 @@ public class AuthToken
         
         try
         {
-            return JsonConvert.DeserializeObject<AuthToken>(Encoding.UTF8.GetString(tokenBuffer, 20,
+            var obj = JsonConvert.DeserializeObject<AuthToken>(Encoding.UTF8.GetString(tokenBuffer, 20,
                 tokenBuffer.Length - 20));
+            if (obj == null)
+                return null;
+            if (obj.Until <= DateTime.UtcNow)
+                return null;
+            return obj;
         }
         catch (Exception e)
         {
