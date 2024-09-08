@@ -22,11 +22,11 @@ public class DefaultAuthentification : IAuthentification
     
     public object? Authentificate(HttpRequest request)
     {
-        var auth = request.GetCookie("auth");
-        if (auth == null)
+        var auth = request.Headers["Authorization"];
+        if (auth.Count != 1)
             return null;
 
-        var token = AuthToken.Unpack(auth, key);
+        var token = AuthToken.Unpack(auth[0], key);
 
         if (token == null)
             return null;
@@ -43,7 +43,7 @@ public class DefaultAuthentification : IAuthentification
             throw new Exception("info's type must be equal to the DataType");
         var token = new AuthToken(DateTime.UtcNow + TokenExpiration, info);
         var pack = token.Pack(key);
-        return new HttpResponse(200, "OK", pack).AddHeader("Set-Cookie", $"auth={pack}; HttpOnly; Max-Age={(long)TokenExpiration.TotalSeconds}; Path=/; Secure; SameSite=None");
+        return new HttpResponse(200, "OK", pack);
     }
     
     public DefaultAuthentification(string key)
