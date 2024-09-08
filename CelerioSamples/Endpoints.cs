@@ -116,12 +116,11 @@ public static class Endpoints
         return context.Pipeline.Authentification.SendAuthentification(x);
     }
     
+    [Authentificated]
     [Route("GET", "/auth")]
     public static object AuthCheck(Context context)
     {
-        if (context.Identity == null)
-            return "None";
-        return (long)context.Identity;
+        return (long)context.Identity!;
     }
     
     [Cached(20, 200)]

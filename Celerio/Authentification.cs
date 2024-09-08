@@ -26,7 +26,17 @@ public class DefaultAuthentification : IAuthentification
         if (auth.Count != 1)
             return null;
 
-        var token = AuthToken.Unpack(auth[0], key);
+        var authParts = auth[0].Split(' ');
+
+        string t;
+        if (authParts.Length == 2)
+            t = authParts[1];
+        else if (authParts.Length == 1)
+            t = auth[0];
+        else
+            return null;
+        
+        var token = AuthToken.Unpack(t, key);
 
         if (token == null)
             return null;
