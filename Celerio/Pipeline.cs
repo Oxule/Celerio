@@ -23,11 +23,6 @@ public class Pipeline
     public IHttpProvider HttpProvider = new Http11ProtocolProvider();
     
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey");
-
-    public void SetAuthDataType(Type type)
-    {
-        Authentification.DataType = type;
-    }
     
     private EndpointManager _endpointManager = new ();
     

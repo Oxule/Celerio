@@ -116,17 +116,17 @@ public static class Endpoints
         return 54;
     }
     
-    [Route("GET", "/auth/{x}")]
-    public static HttpResponse Auth(long x, Context context)
+    [Route("GET", "/auth/{id}")]
+    public static HttpResponse Auth(long id, string name, Context context)
     {
-        return context.Pipeline.Authentification.SendAuthentification(x);
+        return context.Pipeline.Authentification.SendAuthentification(new {id, name});
     }
     
     [Authentificated]
     [Route("GET", "/auth")]
     public static object AuthCheck(Context context)
     {
-        return (long)context.Identity!;
+        return context.Identity!.name;
     }
     
     [Cached(20, 200)]

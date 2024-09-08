@@ -8,19 +8,16 @@ namespace Celerio;
 
 public interface IAuthentification
 {
-    public object? Authentificate(HttpRequest request);
+    public dynamic? Authentificate(HttpRequest request);
     public HttpResponse SendAuthentification(object data);
-
-    public Type DataType { get; set; }
 }
 
 public class DefaultAuthentification : IAuthentification
 {
     private readonly byte[] key;
     public TimeSpan TokenExpiration = TimeSpan.FromDays(24);
-    public Type DataType { get; set; } = typeof(long);
     
-    public object? Authentificate(HttpRequest request)
+    public dynamic? Authentificate(HttpRequest request)
     {
         var auth = request.Headers["Authorization"];
         if (auth.Count != 1)
@@ -46,8 +43,6 @@ public class DefaultAuthentification : IAuthentification
     
     public HttpResponse SendAuthentification(object info)
     {
-        if (info.GetType() != DataType)
-            throw new Exception("info's type must be equal to the DataType");
         var token = new AuthToken(DateTime.UtcNow + TokenExpiration, info);
         var pack = token.Pack(key);
         return new HttpResponse(200, "OK", JsonConvert.SerializeObject(new {code = pack, expires = token.Until}));

@@ -7,7 +7,7 @@ namespace Celerio;
 public class AuthToken
 {
     public DateTime Until = DateTime.MaxValue;
-    public object Data = null;
+    public dynamic Data = null;
 
     public string Pack(byte[] key)
     {
