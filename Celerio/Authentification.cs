@@ -50,7 +50,7 @@ public class DefaultAuthentification : IAuthentification
             throw new Exception("info's type must be equal to the DataType");
         var token = new AuthToken(DateTime.UtcNow + TokenExpiration, info);
         var pack = token.Pack(key);
-        return new HttpResponse(200, "OK", pack);
+        return new HttpResponse(200, "OK", JsonConvert.SerializeObject(new {code = pack, expires = token.Until}));
     }
     
     public DefaultAuthentification(string key)
