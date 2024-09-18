@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Newtonsoft.Json;
 
 namespace Celerio;
 
@@ -91,8 +92,7 @@ public class HttpResponse
     }
     
     public static HttpResponse Ok(string body) => new (200, "OK", body);
-    public static HttpResponse BadRequest(string message) => new (400, "Bad Request", message);
-
+    public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", JsonConvert.SerializeObject(new {code, reason}));
     public static HttpResponse PermanentRedirect(string location) => new HttpResponse(308, "Permanent Redirect").SetHeader("Location", location);
     public static HttpResponse TemporaryRedirect(string location) => new HttpResponse(307, "Temporary Redirect").SetHeader("Location", location);
     
