@@ -14,8 +14,8 @@ public class EndpointManager
 
         public struct RoutePattern
         {
-            private string[] _parts;
-            private bool[] _dynamic;
+            private readonly string[] _parts;
+            private readonly bool[] _dynamic;
             public string[] DynamicParameters;
 
             public RoutePattern(string pattern)
@@ -74,14 +74,13 @@ public class EndpointManager
 
     public void Map(string method, string route, Delegate action)
     {
-        if (action.Method.IsStatic)
-            throw new Exception("Every Endpoint must be static!");
+        if (!action.Method.IsStatic)
+            throw new Exception("Every endpoint must be static!");
         _endpoints.Add(new (method, route, action.Method));
     }
 
     public Endpoint? GetEndpoint(HttpRequest request, out string[] pathParameters)
     {
-        pathParameters = Array.Empty<string>();
         foreach (var ep in _endpoints)
         {
             if (ep.HttpMethod != request.Method)
@@ -92,6 +91,7 @@ public class EndpointManager
             }
         }
 
+        pathParameters = Array.Empty<string>();
         return null;
     }
 
@@ -101,72 +101,69 @@ public class EndpointManager
         object?[] args = new object?[parameters.Length];
         for (int i = 0; i < args.Length; i++)
         {
-            try
-            {
-                if (parameters[i].ParameterType == typeof(Context))
+            if (parameters[i].ParameterType == typeof(Context))
                 {
                     args[i] = context;
                     continue;
                 }
-
-                string param;
+            
+            string value;
                 
-                var path = GetPathParameter(parameters[i].Name, context.Endpoint.Route.DynamicParameters, pathParameters);
-                if (path != null)
-                {
-                    param = path;
-                    goto paramFound;
-                }
-                if (context.Request.Query.TryGetValue(parameters[i].Name, out var query))
-                {
-                    param = query;
-                    goto paramFound;
-                }
-                if (parameters[i].HasDefaultValue)
-                {
-                    args[i] = parameters[i].DefaultValue;
-                    continue;
-                }
-                if (parameters[i].Name == "body")
-                {
-                    if(string.IsNullOrEmpty(context.Request.Body))
-                        return HttpResponse.BadRequest("Body is empty");
-                    param = context.Request.Body;
-                    goto paramFound;
-                }
-                return HttpResponse.BadRequest($"Parameter {parameters[i].Name} didn't specified!");
-
-                paramFound:
-                
-                if (parameters[i].ParameterType == typeof(string))
-                    args[i] = param;
-                else
-                    args[i] = JsonConvert.DeserializeObject(param, parameters[i].ParameterType);
-            }
-            catch (Exception e)
+            var path = GetPathParameter(parameters[i].Name!, context.Endpoint.Route.DynamicParameters, pathParameters);
+            if (path != null)
             {
-                return HttpResponse.BadRequest(
-                    $"Unknown parameter error at {parameters[i].Name}({parameters[i].ParameterType})");
+                value = path;
+            }
+            else if (context.Request.Query.TryGetValue(parameters[i].Name!, out var query))
+            {
+                value = query;
+            }
+            else if (parameters[i].HasDefaultValue)
+            {
+                args[i] = parameters[i].DefaultValue;
+                continue;
+            }
+            else if (parameters[i].Name == "body")
+            {
+                if(string.IsNullOrEmpty(context.Request.Body))
+                    return HttpResponse.BadRequest("Body is empty");
+                value = context.Request.Body;
+            }
+            else
+                return HttpResponse.BadRequest($"Parameter {parameters[i].Name} didn't specified!");
+                
+            if (parameters[i].ParameterType == typeof(string))
+                args[i] = value;
+            else
+            {
+                try
+                {
+                    args[i] = JsonConvert.DeserializeObject(value, parameters[i].ParameterType);
+                }
+                catch (Exception e)
+                {
+                    return HttpResponse.BadRequest($"Parameter {parameters[i].Name} incorrect type");
+                }
             }
         }
+
+        object? respRaw;
         
         try
         {
-            var respRaw = context.Endpoint.Method.Invoke(null, args);
-            HttpResponse resp;
-            if (respRaw.GetType() == typeof(HttpResponse))
-                resp = (HttpResponse)respRaw;
-            else
-                resp = HttpResponse.Ok(JsonConvert.SerializeObject(respRaw));
-
-            return resp;
+            respRaw = context.Endpoint.Method.Invoke(null, args);
         }
         catch (Exception e)
         {
-            if(e.InnerException != null)
-                return HttpResponse.InternalServerError(e.InnerException.Message+'\n'+e.InnerException.StackTrace);
-            return HttpResponse.InternalServerError(e.Message+'\n'+e.StackTrace);
+            return HttpResponse.InternalServerError(e.ToString());
         }
+        HttpResponse resp;
+        
+        if (respRaw != null && respRaw.GetType() == typeof(HttpResponse))
+            resp = (HttpResponse)respRaw;
+        else
+            resp = HttpResponse.Ok(JsonConvert.SerializeObject(respRaw));
+        return resp;
     }
     
     private string? GetPathParameter(string key, string[] keys, string[] values)
@@ -184,7 +181,7 @@ public class EndpointManager
 
     public EndpointManager()
     {
-        Logging.Log("Searching For Endpoints...");
+        Logging.Log("Searching for endpoints...");
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
             foreach (var t in asm.GetTypes())
@@ -199,7 +196,7 @@ public class EndpointManager
                     if (attr == null)
                         continue;
                     
-                    Logging.Log($"Found Endpoint: {attr.Method} {attr.Pattern}");
+                    Logging.Log($"Found endpoint: {attr.Method} {attr.Pattern}");
 
                     _endpoints.Add(new (attr.Method, attr.Pattern, method));
                 }
