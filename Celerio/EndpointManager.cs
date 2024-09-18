@@ -79,11 +79,6 @@ public class EndpointManager
         _endpoints.Add(new (method, route, action.Method));
     }
 
-    public void MapGet(string route, Delegate action) => Map("GET", route, action);
-    public void MapPost(string route, Delegate action) => Map("POST", route, action);
-    public void MapDelete(string route, Delegate action) => Map("DELETE", route, action);
-    public void MapPut(string route, Delegate action) => Map("PUT", route, action);
-
     public Endpoint? GetEndpoint(HttpRequest request, out string[] pathParameters)
     {
         pathParameters = Array.Empty<string>();
@@ -185,7 +180,7 @@ public class EndpointManager
         return null;
     }
     
-    private List<Endpoint> _endpoints = new List<Endpoint>();
+    private List<Endpoint> _endpoints = new ();
 
     public EndpointManager()
     {

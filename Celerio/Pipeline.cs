@@ -29,6 +29,12 @@ public class Pipeline
     internal List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
 
     public CORS Cors = new ();
+
+    public void Map(string method, string route, Delegate action) => _endpointManager.Map(method, route, action);
+    public void MapGet(string route, Delegate action) => Map("GET", route, action);
+    public void MapPost(string route, Delegate action) => Map("POST", route, action);
+    public void MapDelete(string route, Delegate action) => Map("DELETE", route, action);
+    public void MapPut(string route, Delegate action) => Map("PUT", route, action);
     
     public Pipeline AddModule(ModuleBase module)
     {
