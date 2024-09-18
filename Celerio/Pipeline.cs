@@ -24,12 +24,12 @@ public class Pipeline
     
     public IAuthentification Authentification = new DefaultAuthentification("SampleKey");
     
+    public CORS Cors = new ();
+    
     private EndpointManager _endpointManager = new ();
     
-    internal List<ModuleBase> Modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
-
-    public CORS Cors = new ();
-
+    private List<ModuleBase> _modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
+    
     public void Map(string method, string route, Delegate action) => _endpointManager.Map(method, route, action);
     public void MapGet(string route, Delegate action) => Map("GET", route, action);
     public void MapPost(string route, Delegate action) => Map("POST", route, action);
@@ -39,7 +39,7 @@ public class Pipeline
     public Pipeline AddModule(ModuleBase module)
     {
         module.Initialize(this);
-        Modules.Add(module);
+        _modules.Add(module);
         return this;
     }
     
@@ -51,9 +51,7 @@ public class Pipeline
             {
                 if (!HttpProvider.GetRequest(stream, out var request))
                 {
-                    Logging.Warn($"({stream.Socket.RemoteEndPoint})Error While Parsing Protocol. Disconnecting...");
-                    stream.Close();
-                    return;
+                    HttpProvider.SendResponse(stream, new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1").SetHeader("Connection", "Upgrade"));
                 }
                 Stopwatch sw = new Stopwatch();
                 sw.Restart();
@@ -72,7 +70,7 @@ public class Pipeline
     private HttpResponse PipelineExecution(HttpRequest request)
     {
         Context context = new Context(this, request);
-        foreach (var module in Modules)
+        foreach (var module in _modules)
         {
             var resp = module.AfterRequest(context);
             if (resp != null)
@@ -87,7 +85,7 @@ public class Pipeline
         
         context.Endpoint = ep;
         
-        foreach (var module in Modules)
+        foreach (var module in _modules)
         {
             var resp = module.BeforeEndpoint(context);
             if (resp != null)
@@ -96,7 +94,7 @@ public class Pipeline
         
         var response = _endpointManager.CallEndpoint(context, pathParameters);
 
-        foreach (var module in Modules)
+        foreach (var module in _modules)
         {
             var resp = module.AfterEndpoint(context, response);
             if (resp != null)
