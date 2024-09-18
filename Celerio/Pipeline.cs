@@ -52,24 +52,26 @@ public class Pipeline
                 if (!HttpProvider.GetRequest(stream, out var request))
                 {
                     HttpProvider.SendResponse(stream, new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1").SetHeader("Connection", "Upgrade"));
+                    continue;
                 }
                 Stopwatch sw = new Stopwatch();
-                sw.Restart();
-                Logging.Log($"({stream.Socket.RemoteEndPoint})Request Parsed Successfully: {request.Method} {request.URI}");
+                sw.Start();
                 var resp = PipelineExecution(request);
                 HttpProvider.SendResponse(stream, resp);
-                Logging.Log($"({stream.Socket.RemoteEndPoint})Response Sent in {sw.ElapsedMilliseconds}ms ({sw.ElapsedTicks}t)!");
+                Logging.Log($"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage}\n -Response sent in {sw.ElapsedMilliseconds}ms");
             }
         }
         catch (Exception e)
         {
             stream.Close();
+            Logging.Log($"{stream.Socket.RemoteEndPoint} connection closed");
         }
     }
 
     private HttpResponse PipelineExecution(HttpRequest request)
     {
         Context context = new Context(this, request);
+        
         foreach (var module in _modules)
         {
             var resp = module.AfterRequest(context);

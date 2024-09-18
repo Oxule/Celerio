@@ -8,7 +8,7 @@ public class AuthentificatedCheck : ModuleBase
 {
     public override HttpResponse? BeforeEndpoint(Context context)
     {
-        var attr = context.Endpoint.Method.GetCustomAttribute<Authentificated>();
+        var attr = context.Endpoint!.Method.GetCustomAttribute<Authentificated>();
         if (attr != null)
         {
             if (context.Identity == null)

@@ -12,11 +12,11 @@ public class Server
         Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         socket.Bind(new IPEndPoint(IPAddress.Any, port));
         socket.Listen();
-        Logging.Log($"Server Started At http://localhost:{port}");
+        Logging.Log($"Server started at http://localhost:{port}");
         while (true)
         {
             var a = await socket.AcceptAsync();
-            Logging.Log($"Processing Request From {a.RemoteEndPoint}");
+            Logging.Log($"Processing connection from {a.RemoteEndPoint}");
             new Thread(() => _pipeline.ProcessRequest(new NetworkStream(a))).Start();
         }
     }

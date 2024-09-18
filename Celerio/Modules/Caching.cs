@@ -68,7 +68,7 @@ public class Caching : ModuleBase
     
     public override HttpResponse? BeforeEndpoint(Context context)
     {
-        var attr = context.Endpoint.Method.GetCustomAttribute<Cached>();
+        var attr = context.Endpoint!.Method.GetCustomAttribute<Cached>();
         if (attr != null)
         {
             var hash = HashRequest(context.Request);
@@ -103,7 +103,7 @@ public class Caching : ModuleBase
     
     public override HttpResponse? AfterEndpoint(Context context, HttpResponse response)
     {
-        var attr = context.Endpoint.Method.GetCustomAttribute<Cached>();
+        var attr = context.Endpoint!.Method.GetCustomAttribute<Cached>();
         if (attr != null)
         {
             if (attr.StatusCodes.Contains(response.StatusCode))

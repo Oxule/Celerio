@@ -92,6 +92,7 @@ public class HttpResponse
     }
     
     public static HttpResponse Ok(string body) => new (200, "OK", body);
+    
     public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", JsonConvert.SerializeObject(new {code, reason}));
     public static HttpResponse PermanentRedirect(string location) => new HttpResponse(308, "Permanent Redirect").SetHeader("Location", location);
     public static HttpResponse TemporaryRedirect(string location) => new HttpResponse(307, "Temporary Redirect").SetHeader("Location", location);
@@ -101,7 +102,8 @@ public class HttpResponse
     public static HttpResponse Forbidden() => new (403, "Forbidden");
 
     public static HttpResponse NotFound() => new (404, "Not Found");
-    
+    public static HttpResponse NotFound(string reason, int code = 0) => new (404, "Not Found", JsonConvert.SerializeObject(new {code, reason}));
+
     public static HttpResponse InternalServerError(string message) => new (500, "Internal Server Error", message);
 
     public static HttpResponse NotImplemented() => new (501, "Not Implemented");

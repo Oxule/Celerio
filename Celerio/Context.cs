@@ -1,11 +1,13 @@
-﻿namespace Celerio;
+﻿using System.Dynamic;
+
+namespace Celerio;
 
 public class Context
 {
     public readonly Pipeline Pipeline;
     public readonly HttpRequest Request;
-    public Dictionary<string, object?> Details = new ();
     public EndpointManager.Endpoint? Endpoint = null;
+    public dynamic Details = new ExpandoObject();
     public dynamic? Identity = null;
 
     public Context(Pipeline pipeline, HttpRequest request)
