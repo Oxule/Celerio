@@ -5,13 +5,14 @@ namespace Celerio;
 
 public interface IHttpProvider
 {
-    public bool GetRequest(NetworkStream stream, out HttpRequest request);
+    public bool GetRequest(NetworkStream stream, out HttpRequest request, out string reason);
     public void SendResponse(NetworkStream stream, HttpResponse response);
 }
 public class Http11ProtocolProvider : IHttpProvider
 {
-    public bool GetRequest(NetworkStream stream, out HttpRequest request)
+    public bool GetRequest(NetworkStream stream, out HttpRequest request, out string reason)
     {
+        reason = "";
         string uri = "";
         request = new HttpRequest();
         int pointer = 0;
@@ -27,8 +28,11 @@ public class Http11ProtocolProvider : IHttpProvider
                 if (p.Length != 3)
                     return false;
                 if (p[2] != "HTTP/1.1")
+                {
+                    reason = "proto_wrong";
                     return false;
-                
+                }
+
                 request.Method = p[0];
                 uri = p[1];
             }

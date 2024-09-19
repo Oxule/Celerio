@@ -169,6 +169,8 @@ public class EndpointManager
         
         if (respRaw != null && respRaw.GetType() == typeof(HttpResponse))
             resp = (HttpResponse)respRaw;
+        else if (respRaw != null && respRaw is string r)
+            resp = HttpResponse.Ok(r);
         else
             resp = HttpResponse.Ok(JsonConvert.SerializeObject(respRaw));
         return resp;

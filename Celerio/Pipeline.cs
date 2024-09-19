@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json;
@@ -49,16 +50,19 @@ public class Pipeline
         {
             while (true)
             {
-                if (!HttpProvider.GetRequest(stream, out var request))
+                if (!HttpProvider.GetRequest(stream, out var request, out string reason))
                 {
-                    HttpProvider.SendResponse(stream, new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1").SetHeader("Connection", "Upgrade"));
+                    if(reason == "proto_wrong")
+                        HttpProvider.SendResponse(stream, new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1").SetHeader("Connection", "Upgrade"));
+                    else
+                        HttpProvider.SendResponse(stream, HttpResponse.BadRequest("Wrong request"));
                     continue;
                 }
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                var resp = PipelineExecution(request);
+                var resp = PipelineExecution(request, stream.Socket.RemoteEndPoint);
                 HttpProvider.SendResponse(stream, resp);
-                Logging.Log($"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage}\n -Response sent in {sw.ElapsedMilliseconds}ms");
+                Logging.Log($"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage} in {sw.ElapsedMilliseconds}ms");
             }
         }
         catch (Exception e)
@@ -68,9 +72,9 @@ public class Pipeline
         }
     }
 
-    private HttpResponse PipelineExecution(HttpRequest request)
+    private HttpResponse PipelineExecution(HttpRequest request, EndPoint? remote)
     {
-        Context context = new Context(this, request);
+        Context context = new Context(this, request, remote);
         
         foreach (var module in _modules)
         {
