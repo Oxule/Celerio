@@ -10,6 +10,8 @@ public class EndpointManager
     {
         public string HttpMethod;
         public RoutePattern Route;
+
+        public object? Target = null;
         public MethodInfo Method;
 
         public struct RoutePattern
@@ -70,13 +72,19 @@ public class EndpointManager
             Route = new RoutePattern(route);
             Method = method;
         }
+
+        public Endpoint(string httpMethod, string route, Delegate action)
+        {
+            HttpMethod = httpMethod;
+            Route = new RoutePattern(route);
+            Target = action.Target;
+            Method = action.Method;
+        }
     }
 
     public void Map(string method, string route, Delegate action)
     {
-        if (!action.Method.IsStatic)
-            throw new Exception("Every endpoint must be static!");
-        _endpoints.Add(new (method, route, action.Method));
+        _endpoints.Add(new (method, route, action));
     }
 
     public Endpoint? GetEndpoint(HttpRequest request, out string[] pathParameters)
@@ -151,7 +159,7 @@ public class EndpointManager
         
         try
         {
-            respRaw = context.Endpoint.Method.Invoke(null, args);
+            respRaw = context.Endpoint.Method.Invoke(context.Endpoint!.Target, args);
         }
         catch (Exception e)
         {
