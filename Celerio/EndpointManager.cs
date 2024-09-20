@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Celerio;
 
@@ -126,16 +127,16 @@ public class EndpointManager
             {
                 value = query;
             }
-            else if (parameters[i].HasDefaultValue)
-            {
-                args[i] = parameters[i].DefaultValue;
-                continue;
-            }
             else if (parameters[i].Name == "body")
             {
                 if(string.IsNullOrEmpty(context.Request.Body))
                     return HttpResponse.BadRequest("Body is empty");
                 value = context.Request.Body;
+            }
+            else if (parameters[i].HasDefaultValue)
+            {
+                args[i] = parameters[i].DefaultValue;
+                continue;
             }
             else
                 return HttpResponse.BadRequest($"Parameter {parameters[i].Name} didn't specified!");
@@ -146,7 +147,10 @@ public class EndpointManager
             {
                 try
                 {
-                    args[i] = JsonConvert.DeserializeObject(value, parameters[i].ParameterType);
+                    args[i] = JsonConvert.DeserializeObject(value, parameters[i].ParameterType, new JsonSerializerSettings 
+                    { 
+                        ContractResolver = new CamelCasePropertyNamesContractResolver() 
+                    });
                 }
                 catch (Exception e)
                 {
@@ -172,7 +176,10 @@ public class EndpointManager
         else if (respRaw != null && respRaw is string r)
             resp = HttpResponse.Ok(r);
         else
-            resp = HttpResponse.Ok(JsonConvert.SerializeObject(respRaw));
+            resp = HttpResponse.Ok(JsonConvert.SerializeObject(respRaw, new JsonSerializerSettings 
+            { 
+                ContractResolver = new CamelCasePropertyNamesContractResolver() 
+            }));
         return resp;
     }
     
