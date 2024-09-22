@@ -9,6 +9,7 @@ public class Context
     public readonly HttpRequest Request;
     public EndpointManager.Endpoint? Endpoint = null;
     public EndPoint? Remote = null;
+    public string[]? PathParameters;
     public dynamic Details = new ExpandoObject();
     public dynamic? Identity = null;
 

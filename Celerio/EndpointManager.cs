@@ -15,14 +15,18 @@ public class EndpointManager
         public object? Target = null;
         public MethodInfo Method;
 
+        public InputProvider InputProvider;
+
         public struct RoutePattern
         {
             private readonly string[] _parts;
             private readonly bool[] _dynamic;
-            public string[] DynamicParameters;
+            public readonly string[] DynamicParameters;
+            public readonly string Route;
 
             public RoutePattern(string pattern)
             {
+                Route = pattern;
                 _parts = pattern.Split('/');
                 _dynamic = new bool[_parts.Length];
                 var dynamicParams = new List<string>(_parts.Length);
@@ -104,104 +108,13 @@ public class EndpointManager
         return null;
     }
 
-    public HttpResponse CallEndpoint(Context context, string[] pathParameters)
-    {
-        var parameters = context.Endpoint!.Method.GetParameters();
-        object?[] args = new object?[parameters.Length];
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (parameters[i].ParameterType == typeof(Context))
-                {
-                    args[i] = context;
-                    continue;
-                }
-            
-            string value;
-                
-            var path = GetPathParameter(parameters[i].Name!, context.Endpoint.Route.DynamicParameters, pathParameters);
-            if (path != null)
-            {
-                value = path;
-            }
-            else if (context.Request.Query.TryGetValue(parameters[i].Name!, out var query))
-            {
-                value = query;
-            }
-            else if (parameters[i].Name == "body")
-            {
-                if(string.IsNullOrEmpty(context.Request.Body))
-                    return HttpResponse.BadRequest("Body is empty");
-                if (parameters[i].ParameterType == typeof(byte[]))
-                {
-                    args[i] = context.Request.BodyRaw;
-                    continue;
-                }
-                value = context.Request.Body;
-            }
-            else if (parameters[i].HasDefaultValue)
-            {
-                args[i] = parameters[i].DefaultValue;
-                continue;
-            }
-            else
-                return HttpResponse.BadRequest($"Parameter {parameters[i].Name} didn't specified!");
-                
-            if (parameters[i].ParameterType == typeof(string))
-                args[i] = value;
-            else
-            {
-                try
-                {
-                    args[i] = JsonConvert.DeserializeObject(value, parameters[i].ParameterType, new JsonSerializerSettings 
-                    { 
-                        ContractResolver = new CamelCasePropertyNamesContractResolver() 
-                    });
-                }
-                catch (Exception e)
-                {
-                    return HttpResponse.BadRequest($"Parameter {parameters[i].Name} incorrect type");
-                }
-            }
-        }
-
-        object? respRaw;
-        
-        try
-        {
-            respRaw = context.Endpoint.Method.Invoke(context.Endpoint!.Target, args);
-        }
-        catch (Exception e)
-        {
-            return HttpResponse.InternalServerError(e.ToString());
-        }
-        HttpResponse resp;
-        
-        if (respRaw != null && respRaw.GetType() == typeof(HttpResponse))
-            resp = (HttpResponse)respRaw;
-        else if (respRaw != null && respRaw is string r)
-            resp = HttpResponse.Ok(r);
-        else
-            resp = HttpResponse.Ok(JsonConvert.SerializeObject(respRaw, new JsonSerializerSettings 
-            { 
-                ContractResolver = new CamelCasePropertyNamesContractResolver() 
-            }));
-        return resp;
-    }
-    
-    private string? GetPathParameter(string key, string[] keys, string[] values)
-    {
-        for (int i = 0; i < keys.Length; i++)
-        {
-            if (keys[i] == key)
-                return values[i];
-        }
-
-        return null;
-    }
+    public HttpResponse CallEndpoint(Context context) => _invoker.CallEndpoint(context);
     
     private List<Endpoint> _endpoints = new ();
 
-    public EndpointManager()
+    private EndpointInvoker _invoker = new();
+
+    internal void MapStatic()
     {
         Logging.Log("Searching for endpoints...");
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
@@ -224,5 +137,6 @@ public class EndpointManager
                 }
             }
         }
+        _invoker.ResolveProviders(_endpoints);
     }
 }

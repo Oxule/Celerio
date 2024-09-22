@@ -88,7 +88,8 @@ public class Pipeline
         var ep = _endpointManager.GetEndpoint(context.Request, out var pathParameters);
         if (ep == null)
             return HttpResponse.NotFound();
-        
+
+        context.PathParameters = pathParameters;
         context.Endpoint = ep;
         
         foreach (var module in _modules)
@@ -98,7 +99,7 @@ public class Pipeline
                 return resp;
         }
         
-        var response = _endpointManager.CallEndpoint(context, pathParameters);
+        var response = _endpointManager.CallEndpoint(context);
 
         foreach (var module in _modules)
         {
@@ -110,6 +111,11 @@ public class Pipeline
         return response;
     }
 
+    internal void Build()
+    {
+        _endpointManager.MapStatic();
+    }
+    
     public Pipeline()
     {
     }
