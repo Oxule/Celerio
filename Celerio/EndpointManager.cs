@@ -131,6 +131,11 @@ public class EndpointManager
             {
                 if(string.IsNullOrEmpty(context.Request.Body))
                     return HttpResponse.BadRequest("Body is empty");
+                if (parameters[i].ParameterType == typeof(byte[]))
+                {
+                    args[i] = context.Request.BodyRaw;
+                    continue;
+                }
                 value = context.Request.Body;
             }
             else if (parameters[i].HasDefaultValue)
