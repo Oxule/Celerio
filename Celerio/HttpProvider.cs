@@ -25,16 +25,16 @@ public class Http11ProtocolProvider : IHttpProvider
             if (pointer == 0)
             {
                 var p = l.Split(' ');
-                if (p.Length != 3)
+                if (p.Length < 3)
                     return false;
-                if (p[2] != "HTTP/1.1")
+                if (p[^1] != "HTTP/1.1")
                 {
                     reason = "proto_wrong";
                     return false;
                 }
 
                 request.Method = p[0];
-                uri = p[1];
+                uri = string.Join(' ', p, 1, p.Length-2);
             }
             else
             {
