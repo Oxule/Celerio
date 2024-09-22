@@ -114,8 +114,8 @@ public class Http11ProtocolProvider : IHttpProvider
 
     private static byte HexToByte(byte[] chars)
     {
-        if(chars.Length != 2)
-            throw new ArgumentException("Input HEX not a byte");
+        if (chars.Length != 2)
+            return 0;
         byte a = HexCharToByte(chars[0]);
         byte b = HexCharToByte(chars[1]);
         
@@ -158,8 +158,9 @@ public class Http11ProtocolProvider : IHttpProvider
                 return 14;
             case (byte)'F':
                 return 15;
+            default:
+                return 0;
         }
-        throw new ArgumentException("Input HEX not a byte");
     }
 
     public void SendResponse(NetworkStream stream, HttpResponse response)
