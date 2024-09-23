@@ -7,13 +7,13 @@ public class MultipartData
 {
     public class Part
     {
-        public readonly string? Body;
+        public readonly string Body;
         public readonly byte[] BodyRaw;
         public readonly string Name;
         public readonly string? Filename;
         public readonly HeadersCollection Headers;
 
-        public Part(string? body, byte[] bodyRaw, string name, string? filename, HeadersCollection headers)
+        public Part(string body, byte[] bodyRaw, string name, string? filename, HeadersCollection headers)
         {
             Body = body;
             BodyRaw = bodyRaw;
@@ -32,6 +32,8 @@ public class MultipartData
     
     private static Regex ContentTypeRegex = new (@"multipart\/form-data; *boundary=(.*)", RegexOptions.Compiled);
     private static Regex ContentDispositionRegex = new (@"form-data; name=\""([^""]*)\""(; filename=\""(.*)\"")?", RegexOptions.Compiled);
+
+    public Part? GetPart(string name) => Parts.FirstOrDefault(p => p.Name == name);
     
     public static bool TryParse(HttpRequest request, out MultipartData? data, out string? reason)
     {
