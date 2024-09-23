@@ -30,6 +30,7 @@ public class MultipartData
         Parts = parts;
     }
     
+    
     private static Regex ContentTypeRegex = new (@"multipart\/form-data; *boundary=(.*)", RegexOptions.Compiled);
     private static Regex ContentDispositionRegex = new (@"form-data; name=\""([^""]*)\""(; filename=\""(.*)\"")?", RegexOptions.Compiled);
 
