@@ -11,7 +11,7 @@ public class BodyVariable : InputModuleBase
 
         if (parameter.Name != "body")
             return false;
-
+        
         if (parameter.ParameterType == typeof(byte[]))
             provider = (Context context, out object? value, out string? reason) =>
             {
@@ -39,6 +39,19 @@ public class BodyVariable : InputModuleBase
                 value = context.Request.Body;
                 return true;
             };
+        
+        if (parameter.ParameterType == typeof(MultipartData))
+            provider = (Context context, out object? value, out string? reason) =>
+            {
+                value = null;
+                if(!MultipartData.TryParse(context.Request, out var data, out reason))
+                    return false;
+                
+                reason = null;
+                value = data;
+                return true;
+            };
+        
         else
             provider = (Context context, out object? value, out string? reason) =>
             {

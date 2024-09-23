@@ -54,6 +54,12 @@ public static class Endpoints
         return mass*g;
     }
 
+    [Route("POST", "/form-data")]
+    public static object? FormData(MultipartData body)
+    {
+        return body;
+    }
+    
     [Route("GET", "/path/{id}/{name}")]
     public static (int id, string name) Path(int id, string name)
     {
