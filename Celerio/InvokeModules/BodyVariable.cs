@@ -40,7 +40,7 @@ public class BodyVariable : InputModuleBase
                 return true;
             };
         
-        if (parameter.ParameterType == typeof(MultipartData))
+        else if (parameter.ParameterType == typeof(MultipartData))
             provider = (Context context, out object? value, out string? reason) =>
             {
                 value = null;
