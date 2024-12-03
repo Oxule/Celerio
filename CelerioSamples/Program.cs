@@ -1,9 +1,10 @@
 ﻿using Celerio;
+using CelerioSamples;
 using Newtonsoft.Json;
 
 var pipeline = new Pipeline();
 
-pipeline.Authentification = new DefaultAuthentification("Your Unknown Secret Key");
+pipeline.Authentification = new Authentification<AuthSample.Credentials>("Your Unknown Secret Key");
 
 pipeline.Cors.AddOrigin("*");
 

@@ -8,16 +8,16 @@ namespace Celerio;
 
 public interface IAuthentification
 {
-    public dynamic? Authentificate(HttpRequest request);
+    public object? Authentificate(HttpRequest request);
     public HttpResponse SendAuthentification(object data);
 }
 
-public class DefaultAuthentification : IAuthentification
+public class Authentification<T> : IAuthentification
 {
     private readonly byte[] key;
-    public TimeSpan TokenExpiration = TimeSpan.FromDays(24);
+    public readonly TimeSpan TokenExpiration = TimeSpan.FromDays(24);
     
-    public dynamic? Authentificate(HttpRequest request)
+    public object? Authentificate(HttpRequest request)
     {
         var auth = request.Headers["Authorization"];
         if (auth.Count != 1)
@@ -33,7 +33,7 @@ public class DefaultAuthentification : IAuthentification
         else
             return null;
         
-        var token = AuthToken.Unpack(t, key);
+        var token = AuthToken<T>.Unpack(t, key);
 
         if (token == null)
             return null;
@@ -43,12 +43,12 @@ public class DefaultAuthentification : IAuthentification
     
     public HttpResponse SendAuthentification(object info)
     {
-        var token = new AuthToken(DateTime.UtcNow + TokenExpiration, info);
+        var token = new AuthToken<T>(DateTime.UtcNow + TokenExpiration, (T)info);
         var pack = token.Pack(key);
         return new HttpResponse(200, "OK", JsonConvert.SerializeObject(new {code = pack, expires = token.Until}));
     }
     
-    public DefaultAuthentification(string key)
+    public Authentification(string key)
     {
         this.key = SHA256.HashData(Encoding.UTF8.GetBytes(key));
     }

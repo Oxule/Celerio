@@ -11,7 +11,7 @@ public class Context
     public EndPoint? Remote = null;
     public string[]? PathParameters;
     public dynamic Details = new ExpandoObject();
-    public dynamic? Identity = null;
+    public object? Identity = null;
 
     public Context(Pipeline pipeline, HttpRequest request, EndPoint? endPoint)
     {

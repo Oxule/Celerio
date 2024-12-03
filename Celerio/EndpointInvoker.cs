@@ -43,7 +43,7 @@ public class EndpointInvoker
 {
     private List<InputModuleBase> _inputModules = new()
     {
-        
+        new AuthVariable()
     };
 
     private List<InputModuleBase> _lateInputModules = new()

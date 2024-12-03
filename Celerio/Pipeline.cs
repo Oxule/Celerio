@@ -23,7 +23,7 @@ public class Pipeline
 {
     public IHttpProvider HttpProvider = new Http11ProtocolProvider();
     
-    public IAuthentification Authentification = new DefaultAuthentification("SampleKey");
+    public IAuthentification Authentification = new Authentification<string>("SampleKey");
     
     public CORS Cors = new ();
     

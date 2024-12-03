@@ -4,10 +4,10 @@ using Newtonsoft.Json;
 
 namespace Celerio;
 
-public class AuthToken
+public class AuthToken<T>
 {
     public DateTime Until = DateTime.MaxValue;
-    public dynamic Data = null;
+    public T? Data = default;
 
     public string Pack(byte[] key)
     {
@@ -34,7 +34,7 @@ public class AuthToken
         return Convert.ToBase64String(ivBuffer);
     }
 
-    public static AuthToken? Unpack(string token, byte[] key)
+    public static AuthToken<T>? Unpack(string token, byte[] key)
     {
         var tokenEncrypt = Convert.FromBase64String(token);
         
@@ -56,7 +56,7 @@ public class AuthToken
         
         try
         {
-            var obj = JsonConvert.DeserializeObject<AuthToken>(Encoding.UTF8.GetString(tokenBuffer, 20,
+            var obj = JsonConvert.DeserializeObject<AuthToken<T>>(Encoding.UTF8.GetString(tokenBuffer, 20,
                 tokenBuffer.Length - 20));
             if (obj == null)
                 return null;
@@ -70,7 +70,7 @@ public class AuthToken
         }
     }
 
-    public AuthToken(DateTime until, object data)
+    public AuthToken(DateTime until, T data)
     {
         Until = until;
         Data = data;
