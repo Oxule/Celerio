@@ -3,12 +3,19 @@ using Newtonsoft.Json;
 
 namespace Celerio.InvokeModules;
 
-public class QueryVariable : InputModuleBase
+public class QueryVariable : ArgumentType
 {
-    public override bool GetArgumentProvider(ParameterInfo parameter, EndpointManager.Endpoint ep, out InputProvider.ArgumentProvider? provider)
+    public override bool NeedsValidation() => true;
+
+    public override bool IsRepresents(ParameterInfo parameter, Endpoint endpoint)
+    {
+        return true;
+    }
+    
+    public override ArgumentResolver CreateResolver(ParameterInfo parameter, Endpoint ep)
     {
         if (parameter.ParameterType == typeof(string))
-            provider = (Context context, out object? value, out string? reason) =>
+            return (Context context, out object? value, out string? reason) =>
             {
                 reason = null;
                 value = null;
@@ -26,8 +33,7 @@ public class QueryVariable : InputModuleBase
                 return false;
             };
         
-        else
-            provider = (Context context, out object? value, out string? reason) =>
+        return (Context context, out object? value, out string? reason) =>
             {
                 reason = null;
                 value = null;
@@ -52,7 +58,5 @@ public class QueryVariable : InputModuleBase
                 reason = $"Query parameter [{parameter.Name!}] didn't specified";
                 return false;
             };
-        
-        return true;
     }
 }

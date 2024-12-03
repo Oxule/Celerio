@@ -3,11 +3,11 @@ using Newtonsoft.Json;
 
 namespace Celerio.InvokeModules;
 
-public class AuthVariable : ArgumentType
+public class ContextVariable : ArgumentType
 {
     public override bool IsRepresents(ParameterInfo parameter, Endpoint endpoint)
     {
-        if (parameter.Name != "auth")
+        if (parameter.ParameterType != typeof(Context))
             return false;
         return true;
     }
@@ -16,18 +16,8 @@ public class AuthVariable : ArgumentType
     {
         return (Context context, out object? value, out string? reason) =>
         {
-            if (context.Identity != null)
-            {
-                try
-                {
-                    value = Convert.ChangeType(context.Identity, parameter.ParameterType);
-                    reason = null;
-                    return true;
-                }
-                catch { }
-            }
-            value = null;
             reason = null;
+            value = context;
             return true;
         };
     }

@@ -3,17 +3,21 @@ using Newtonsoft.Json;
 
 namespace Celerio.InvokeModules;
 
-public class BodyVariable : InputModuleBase
+public class BodyVariable : ArgumentType
 {
-    public override bool GetArgumentProvider(ParameterInfo parameter, EndpointManager.Endpoint ep, out InputProvider.ArgumentProvider? provider)
-    {
-        provider = null;
+    public override bool NeedsValidation() => true;
 
+    public override bool IsRepresents(ParameterInfo parameter, Endpoint endpoint)
+    {
         if (parameter.Name != "body")
             return false;
-        
+        return true;
+    }
+
+    public override ArgumentResolver CreateResolver(ParameterInfo parameter, Endpoint ep)
+    {
         if (parameter.ParameterType == typeof(byte[]))
-            provider = (Context context, out object? value, out string? reason) =>
+            return (Context context, out object? value, out string? reason) =>
             {
                 if (context.Request.BodyRaw == null || context.Request.BodyRaw.Length == 0)
                 {
@@ -26,8 +30,8 @@ public class BodyVariable : InputModuleBase
                 return true;
             };
         
-        else if (parameter.ParameterType == typeof(string))
-            provider = (Context context, out object? value, out string? reason) =>
+        if (parameter.ParameterType == typeof(string))
+            return (Context context, out object? value, out string? reason) =>
             {
                 if (string.IsNullOrEmpty(context.Request.Body))
                 {
@@ -40,8 +44,8 @@ public class BodyVariable : InputModuleBase
                 return true;
             };
         
-        else if (parameter.ParameterType == typeof(MultipartData))
-            provider = (Context context, out object? value, out string? reason) =>
+        if (parameter.ParameterType == typeof(MultipartData))
+            return (Context context, out object? value, out string? reason) =>
             {
                 value = null;
                 if(!MultipartData.TryParse(context.Request, out var data, out reason))
@@ -52,8 +56,7 @@ public class BodyVariable : InputModuleBase
                 return true;
             };
         
-        else
-            provider = (Context context, out object? value, out string? reason) =>
+        return (Context context, out object? value, out string? reason) =>
             {
                 value = null;
                 reason = null;
@@ -73,6 +76,5 @@ public class BodyVariable : InputModuleBase
                     return false;
                 }
             };
-        return true;
     }
 }

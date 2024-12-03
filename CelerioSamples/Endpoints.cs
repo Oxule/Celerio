@@ -49,7 +49,7 @@ public static class Endpoints
     }
     
     [Route("GET", "/force")]
-    public static float Force(float mass, float g = 10)
+    public static float Force(float mass, float g = 9.8f)
     {
         return mass*g;
     }

@@ -3,17 +3,22 @@ using Newtonsoft.Json;
 
 namespace Celerio.InvokeModules;
 
-public class PathVariable : InputModuleBase
+public class PathVariable : ArgumentType
 {
-    public override bool GetArgumentProvider(ParameterInfo parameter, EndpointManager.Endpoint ep, out InputProvider.ArgumentProvider? provider)
+    public override bool NeedsValidation() => true;
+
+    public override bool IsRepresents(ParameterInfo parameter, Endpoint endpoint)
     {
-        provider = null;
-        if (!ep.Route.DynamicParameters.Contains(parameter.Name!))
+        if (!endpoint.Route.DynamicParameters.Contains(parameter.Name!))
             return false;
-        
+        return true;
+    }
+
+    public override ArgumentResolver CreateResolver(ParameterInfo parameter, Endpoint ep)
+    {
         int parameterIndex = Array.IndexOf(ep.Route.DynamicParameters, parameter.Name!);
         
-        provider = (Context context, out object? value, out string? reason) =>
+        return (Context context, out object? value, out string? reason) =>
         {
             reason = null;
             value = null;
@@ -34,6 +39,5 @@ public class PathVariable : InputModuleBase
                 return false;
             }
         };
-        return true;
     }
 }
