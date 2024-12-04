@@ -11,7 +11,11 @@ public class EndpointInvoker
     internal HttpResponse CallEndpoint(Context context)
     {
         if (!context.Endpoint!.Arguments.Resolve(context, out var args, out var reason))
-            return HttpResponse.BadRequest(reason);
+            return HttpResponse.BadRequest(reason!);
+
+        var validation = context.Endpoint!.Arguments.Validate(args);
+        if(!validation.Valid)
+            return HttpResponse.BadRequest(validation.Message!);
         
         object? resp;
         try

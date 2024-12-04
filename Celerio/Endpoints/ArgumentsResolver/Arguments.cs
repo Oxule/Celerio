@@ -18,9 +18,9 @@ public class Arguments
     public class Argument
     {
         public readonly ArgumentType.ArgumentResolver Resolver;
-        public readonly ArgumentValidator.Validator? Validator;
+        public readonly ArgumentValidator.Validator? Validator = null;
 
-        public Argument(ArgumentType.ArgumentResolver resolver, ArgumentValidator.Validator? validator)
+        public Argument(ArgumentType.ArgumentResolver resolver, ArgumentValidator.Validator? validator = null)
         {
             Resolver = resolver;
             Validator = validator;
@@ -42,9 +42,8 @@ public class Arguments
             ArgumentValidator.Validator? validator = null;
 
             if (type.NeedsValidation())
-            {
-                //TODO: build validator
-            }
+                validator = ArgumentValidator.CreateValidator(parameters[i].ParameterType,
+                    parameters[i].GetCustomAttributes(true), parameters[i].Name!);
             
             arguments[i] = new Argument(resolver, validator);
         }
@@ -67,6 +66,20 @@ public class Arguments
                 return false;
         }
         return true;
+    }
+
+    public ArgumentValidator.ValidationResult Validate(object?[] args)
+    {
+        for (int i = 0; i < _arguments.Length; i++)
+        {
+            if(_arguments[i].Validator == null)
+                continue;
+            var result = _arguments[i].Validator!.Invoke(args[i]);
+            if (!result.Valid)
+                return result;
+        }
+
+        return new();
     }
     
     private static ArgumentType FindType(ParameterInfo parameter, Endpoint endpoint)
