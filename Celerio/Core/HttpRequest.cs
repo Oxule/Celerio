@@ -8,35 +8,6 @@ public class HttpRequest
     public HeadersCollection Headers { get; set; }
     public byte[]? BodyRaw { get; set; }
     public string? Body { get; set; }
-
-    public string? GetCookie(string key)
-    {
-        if (!Headers.TryGet("Cookie", out var cookie))
-            return null;
-
-        foreach (var c in cookie[0].Split("; "))
-        {
-            if(c.Length <= key.Length)
-                continue;
-            for (int i = 0; i < key.Length; i++)
-            {
-                if (c[i] != key[i])
-                    goto no;
-            }
-
-            if (c[key.Length] == '=')
-            {
-                var offset = key.Length + 1;
-                var value = c.Substring(offset, c.Length - offset);
-                return value;
-            }
-            
-            no:
-            continue;
-        }
-        
-        return null;
-    }
     
     public HttpRequest()
     {

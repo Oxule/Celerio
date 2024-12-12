@@ -165,7 +165,7 @@ public class Http11ProtocolProvider : IHttpProvider
 
     public void SendResponse(NetworkStream stream, HttpResponse response)
     {
-        response.PostProcess();
+        response.PreProcess();
         stream.Write(Encoding.ASCII.GetBytes($"HTTP/1.1 {response.StatusCode} {response.StatusMessage}\n"));
         foreach (var header in response.Headers)
         {

@@ -8,41 +8,13 @@ using Newtonsoft.Json.Serialization;
 
 namespace Celerio;
 
-public class ModuleBase
-{
-    public virtual void Initialize(Pipeline pipeline){}
-
-    public virtual HttpResponse? AfterRequest(Context context) { return null;}
-    
-    public virtual HttpResponse? BeforeEndpoint(Context context) { return null;}
-    
-    public virtual HttpResponse? AfterEndpoint(Context context, HttpResponse response) { return null;}
-}
-
 public class Pipeline
 {
     public IHttpProvider HttpProvider = new Http11ProtocolProvider();
     
-    public IAuthentification Authentification = new Authentification<string>("SampleKey");
+    public IAuthentification Authentification = new Authentification<string>(DateTime.Now.ToString("O"));
     
     public CORS Cors = new ();
-    
-    private EndpointManager _endpointManager = new ();
-    
-    private List<ModuleBase> _modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
-    
-    public void Map(string method, string route, Delegate action) => _endpointManager.Map(method, route, action);
-    public void MapGet(string route, Delegate action) => Map("GET", route, action);
-    public void MapPost(string route, Delegate action) => Map("POST", route, action);
-    public void MapDelete(string route, Delegate action) => Map("DELETE", route, action);
-    public void MapPut(string route, Delegate action) => Map("PUT", route, action);
-    
-    public Pipeline AddModule(ModuleBase module)
-    {
-        module.Initialize(this);
-        _modules.Add(module);
-        return this;
-    }
     
     internal void ProcessRequest(NetworkStream stream)
     {
@@ -65,7 +37,7 @@ public class Pipeline
                 Logging.Log($"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage} in {sw.ElapsedMilliseconds}ms");
             }
         }
-        catch (Exception e)
+        catch (SocketException e)
         {
             stream.Close();
             Logging.Log($"{stream.Socket.RemoteEndPoint} connection closed");
@@ -116,7 +88,29 @@ public class Pipeline
         _endpointManager.MapStatic();
     }
     
-    public Pipeline()
-    {
-    }
+    public Pipeline(){}
+
+    #region Endpoints
+    
+        private readonly EndpointManager _endpointManager = new ();
+    
+        public void Map(string method, string route, Delegate action) => _endpointManager.Map(method, route, action);
+        public void MapGet(string route, Delegate action) => Map("GET", route, action);
+        public void MapPost(string route, Delegate action) => Map("POST", route, action);
+        public void MapDelete(string route, Delegate action) => Map("DELETE", route, action);
+        public void MapPut(string route, Delegate action) => Map("PUT", route, action);
+    
+    #endregion
+
+    #region Modules
+
+        private List<ModuleBase> _modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
+        public Pipeline AddModule(ModuleBase module)
+        {
+            module.Initialize(this);
+            _modules.Add(module);
+            return this;
+        }
+
+    #endregion
 }

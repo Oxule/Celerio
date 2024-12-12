@@ -10,7 +10,7 @@ public class HttpResponse
     public HeadersCollection Headers { get; set; } = new ();
     public byte[]? Body { get; set; }
     
-    public void PostProcess()
+    public void PreProcess()
     {
         SetHeader("Server", "Celerio/1.1");
         SetHeader("Date", DateTime.UtcNow.ToString("r"));
@@ -91,7 +91,7 @@ public class HttpResponse
         return InternalServerError("Can't read file");
     }
     
-    public static HttpResponse Ok(string body) => new (200, "OK", body);
+    public static HttpResponse Ok(string body = "") => new (200, "OK", body);
     
     public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", JsonConvert.SerializeObject(new {code, reason}));
     public static HttpResponse PermanentRedirect(string location) => new HttpResponse(308, "Permanent Redirect").SetHeader("Location", location);
