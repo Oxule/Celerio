@@ -1,10 +1,32 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005Cpackage_005CCelerio_002E1_002E0_002E5_002Enupkg/@EntryIndexedValue">True</s:Boolean>
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=1b241b54_002D35a7_002D44ca_002Db039_002Dc5dd9ad2f733/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="PathMatching" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9cd594d2_002D587e_002D49ba_002Dbc66_002D44558119ecac/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Test1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.PathMatching&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.OpenApi.Test1&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::2390A47C-6E44-4BA7-AEEB-F7C4DB466D6B::net8.0::CelerioTests.StaticDirectory.Directory_PERFECT&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.GeneralTest&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.ConnectionTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.ServerTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::ServerTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a67cd7e2_002D1c22_002D446a_002Da219_002D58657689cf8f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="StartListening_PortAlreadyInUse_ThrowsAddressAlreadyInUseException" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.ServerTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=ea2cdb1c_002Dc5f9_002D4b0c_002Dbd9b_002De62a1d95afeb/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="StartListening_PortAlreadyInUse_ThrowsAddressAlreadyInUseException #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.ServerTests.StartListening_PortAlreadyInUse_ThrowsAddressAlreadyInUseException&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f29e01eb_002D314b_002D4fd5_002Da6c8_002D4330dc77e8da/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ServerTests #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.ServerTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=fc292230_002D74a8_002D4476_002D8cfc_002D9afaf4deb6ee/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="ServerTests" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::18DA1DED-FFB8-4667-B259-3D6C9F9E88FD::net8.0::Celerio.Tests.ServerTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
