@@ -9,4 +9,4 @@ pipeline.Authentification = new Authentification<AuthSample.Credentials>("Your U
 pipeline.Cors.AddOrigin("*");
 
 Server server = new Server(pipeline);
-await server.StartListening(5000);
+server.StartListening(5000);
