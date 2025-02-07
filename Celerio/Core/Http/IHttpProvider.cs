@@ -16,5 +16,5 @@ public interface IHttpProvider
         ContentLengthMismatch = 7
     }
     public bool ParseRequest(NetworkStream stream, out HttpRequest request, out HttpParsingError error);
-    public void SendResponse(NetworkStream stream, HttpResponse response);
+    public Task SendResponseAsync(NetworkStream stream, HttpResponse response);
 }

@@ -7,9 +7,9 @@ public class Server
 {
     private readonly Pipeline _pipeline;
 
-    public void StartListening(int port = 5000, int backlog = 1000) => StartListeningAsync().Wait();
+    public void StartListening(int port = 5000, int backlog = 5000, CancellationToken cancellationToken = default) => new Thread(()=>StartListeningThread(port, backlog, cancellationToken)).Start();
     
-    public async Task StartListeningAsync(int port = 5000, int backlog = 1000, CancellationToken cancellationToken = default)
+    private void StartListeningThread(int port = 5000, int backlog = 5000, CancellationToken cancellationToken = default)
     {
         if (port <= 0 || port >= 65536)
             throw new ArgumentOutOfRangeException($"Port must be between 0-65536 ({port})");
@@ -27,14 +27,14 @@ public class Server
         {
             try
             {
-                var clientSocket = await listenSocket.AcceptAsync(cancellationToken);
+                var clientSocket = listenSocket.Accept();
                 
-                _ = Task.Run(async () =>
+                _ = Task.Run(() =>
                 {
                     try
                     {
                         using var networkStream = new NetworkStream(clientSocket, ownsSocket: true);
-                        Logging.Log($"Processing connection from {clientSocket.RemoteEndPoint}");
+                        //Logging.Log($"Processing connection from {clientSocket.RemoteEndPoint}");
                         Connection.HandleConnection(networkStream, _pipeline.HttpProvider, _pipeline.PipelineExecution);
                     }
                     catch (Exception ex)

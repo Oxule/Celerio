@@ -99,20 +99,15 @@ public class DefaultHttpProvider : IHttpProvider
                 req.URI = uri;
             }
 
-            // 3. Парсим заголовки.
-            // Обрабатываем многострочные (с отступом) заголовки – если встретилась строка, начинающаяся с SP или TAB,
-            // она считается продолжением предыдущего заголовка.
             string? currentHeaderName = null;
             StringBuilder currentHeaderValue = new StringBuilder();
 
-            // Строки заголовков начинаются со второго элемента и продолжаются до первой пустой строки.
             for (int i = 1; i < headerLines.Length; i++)
             {
                 string line = headerLines[i];
                 if (line.Length == 0)
-                    break; // пустая строка – конец заголовков
+                    break;
 
-                // Продолжение предыдущего заголовка (folded header)
                 if ((line[0] == ' ' || line[0] == '\t') && currentHeaderName != null)
                 {
                     currentHeaderValue.Append(' ');
@@ -120,7 +115,6 @@ public class DefaultHttpProvider : IHttpProvider
                     continue;
                 }
 
-                // Если был предыдущий заголовок – добавляем его.
                 if (currentHeaderName != null)
                 {
                     req.Headers.Add(currentHeaderName, currentHeaderValue.ToString());
@@ -144,8 +138,6 @@ public class DefaultHttpProvider : IHttpProvider
                 req.Headers.Add(currentHeaderName, currentHeaderValue.ToString());
             }
 
-            // 4. Подготовка к чтению тела запроса.
-            // Если после заголовков прочитано больше данных – они относятся к телу.
             int leftoverCount = totalRead - headerSectionLength;
             byte[] leftover = new byte[leftoverCount];
             if (leftoverCount > 0)
@@ -153,11 +145,8 @@ public class DefaultHttpProvider : IHttpProvider
                 Buffer.BlockCopy(headerBuffer, headerSectionLength, leftover, 0, leftoverCount);
             }
 
-            // Инициализируем буферизированный ридер, который сначала отдаёт уже прочитанные (leftover) байты.
             var sb = new StreamBuffer(stream, leftover, leftoverCount);
 
-            // 5. Читаем тело, если оно предусмотрено.
-            // Приоритет отдается Transfer-Encoding: chunked.
             string? transferEncoding = req.Headers.GetFirst("Transfer-Encoding");
             if (!string.IsNullOrEmpty(transferEncoding) &&
                 transferEncoding.Equals("chunked", StringComparison.OrdinalIgnoreCase))
@@ -181,7 +170,6 @@ public class DefaultHttpProvider : IHttpProvider
                 }
 
                 byte[] body = new byte[contentLength];
-                // Если часть тела уже в буфере, она копируется в body.
                 int alreadyRead = sb.Available;
                 if (alreadyRead > contentLength)
                     alreadyRead = contentLength;
@@ -205,7 +193,6 @@ public class DefaultHttpProvider : IHttpProvider
             }
             else
             {
-                // Нет тела – но если всё-таки есть лишние байты, отдаём их.
                 if (sb.Available > 0)
                 {
                     byte[] body = new byte[sb.Available];
@@ -304,26 +291,29 @@ public class DefaultHttpProvider : IHttpProvider
 
         return true;
     }
-
     
-    
-    public void SendResponse(NetworkStream stream, HttpResponse response)
+    public async Task SendResponseAsync(NetworkStream stream, HttpResponse response)
     {
         response.PreProcess();
-        stream.Write(Encoding.ASCII.GetBytes($"HTTP/1.1 {response.StatusCode} {response.StatusMessage}\n"));
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"HTTP/1.1 {response.StatusCode} {response.StatusMessage}");
         foreach (var header in response.Headers)
         {
-            foreach (var v in header.Value)
+            foreach (var value in header.Value)
             {
-                stream.Write(Encoding.ASCII.GetBytes($"{header.Key}: {v}\n"));
+                sb.AppendLine($"{header.Key}: {value}");
             }
         }
+        sb.AppendLine();
 
-        stream.WriteByte((byte)'\n');
+        var headerBytes = Encoding.ASCII.GetBytes(sb.ToString());
+        await stream.WriteAsync(headerBytes, 0, headerBytes.Length).ConfigureAwait(false);
 
         if (response.Body != null)
         {
-            stream.Write(response.Body, 0, response.Body.Length);
+            await stream.WriteAsync(response.Body, 0, response.Body.Length).ConfigureAwait(false);
         }
-    }
-}
+
+        await stream.FlushAsync().ConfigureAwait(false);
+    }}

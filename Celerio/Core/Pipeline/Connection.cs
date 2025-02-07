@@ -17,11 +17,11 @@ internal static class Connection
                 if (!httpProvider.ParseRequest(stream, out var request, out IHttpProvider.HttpParsingError reason))
                 {
                     if (reason == IHttpProvider.HttpParsingError.Version)
-                        httpProvider.SendResponse(stream,
+                        httpProvider.SendResponseAsync(stream,
                             new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1")
                                 .SetHeader("Connection", "Upgrade"));
                     else
-                        httpProvider.SendResponse(stream, HttpResponse.BadRequest("Wrong request"));
+                        httpProvider.SendResponseAsync(stream, HttpResponse.BadRequest("Wrong request"));
                     continue;
                 }
 
@@ -43,23 +43,23 @@ internal static class Connection
                 
                 #endregion
                 
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
+                //Stopwatch sw = new Stopwatch();
+                //sw.Start();
                 var resp = pipelineExecution(request, stream.Socket.RemoteEndPoint!);
 
                 resp.SetHeader("Connection", connection);
                 
-                httpProvider.SendResponse(stream, resp);
-                sw.Stop();
-                Logging.Log(
-                    $"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage} in {sw.ElapsedMilliseconds}ms");
+                httpProvider.SendResponseAsync(stream, resp);
+                //sw.Stop();
+                //Logging.Log(
+                    //$"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage} in {sw.ElapsedMilliseconds}ms");
 
                 if (!keepAlive)
                     break;
                 
                 void ThrowBadRequest(string content)
                 {
-                    httpProvider.SendResponse(stream,
+                    httpProvider.SendResponseAsync(stream,
                         new HttpResponse(400, "Bad Request").SetBody(content));
                 }
             }
