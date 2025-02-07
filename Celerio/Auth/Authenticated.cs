@@ -2,9 +2,9 @@
 
 namespace Celerio;
 
-public class Authentificated : Attribute { }
+public class Authenticated : Attribute { }
 
-public class AuthentificatedCheck : ModuleBase
+public class AuthenticatedCheck : ModuleBase
 {
     private static bool IsNullableReferenceType(ParameterInfo parameter)
     {
@@ -32,7 +32,7 @@ public class AuthentificatedCheck : ModuleBase
                 }
             }
 
-            if (context.Endpoint!.Method.GetCustomAttribute<Authentificated>() != null)
+            if (context.Endpoint!.Method.GetCustomAttribute<Authenticated>() != null)
             {
                 return HttpResponse.Unauthorized();
             }

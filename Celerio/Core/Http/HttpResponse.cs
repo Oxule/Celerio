@@ -40,10 +40,7 @@ public class HttpResponse
     }
     public HttpResponse SetHeader(string name, string value)
     {
-        if (Headers.Contains(name))
-            Headers[name] = new (){value};
-        else
-            Headers.Add(name, value);
+        Headers.Set(name, value);
         return this;
     }
     
@@ -92,6 +89,8 @@ public class HttpResponse
     }
     
     public static HttpResponse Ok(string body = "") => new (200, "OK", body);
+    public static HttpResponse Created(string body = "") => new (201, "Created", body);
+
     
     public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", JsonConvert.SerializeObject(new {code, reason}));
     public static HttpResponse PermanentRedirect(string location) => new HttpResponse(308, "Permanent Redirect").SetHeader("Location", location);

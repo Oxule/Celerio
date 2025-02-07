@@ -41,13 +41,13 @@ public class MultipartData
         reason = null;
         data = null;
 
-        if (request.BodyRaw == null || request.BodyRaw.Length == 0)
+        if (request.Body == null || request.Body.Length == 0)
         {
             reason = "No request body";
             return false;
         }
 
-        if (!request.Headers.TryGet("Content-Type", out var contentType))
+        if (!request.Headers.TryGet("Content-Type", out List<string> contentType))
         {
             reason = "No Content-Type header";
             return false;
@@ -67,7 +67,7 @@ public class MultipartData
         }
 
         string boundary = "--" + contentTypeMatch.Groups[1].Value;
-        byte[] bodyBytes = request.BodyRaw!;
+        byte[] bodyBytes = request.Body!;
         List<Part> parts = new List<Part>();
         
         int index = 0;
@@ -81,7 +81,7 @@ public class MultipartData
             
             var headersSpan = bodyBytes.AsSpan(headerStartIndex, headerEndIndex - headerStartIndex);
             var headers = ParseHeaders(headersSpan);
-            if (!headers.TryGet("Content-Disposition", out var contentDisposition))
+            if (!headers.TryGet("Content-Disposition", out List<string> contentDisposition))
             {
                 reason = "Every part should contain Content-Disposition header";
                 return false;

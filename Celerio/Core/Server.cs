@@ -35,7 +35,7 @@ public class Server
                     {
                         using var networkStream = new NetworkStream(clientSocket, ownsSocket: true);
                         Logging.Log($"Processing connection from {clientSocket.RemoteEndPoint}");
-                        await _pipeline.ProcessRequestAsync(networkStream);
+                        Connection.HandleConnection(networkStream, _pipeline.HttpProvider, _pipeline.PipelineExecution);
                     }
                     catch (Exception ex)
                     {

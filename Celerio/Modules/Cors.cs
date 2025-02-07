@@ -1,6 +1,29 @@
 ﻿namespace Celerio;
 
-public class CORS
+public class CorsFilter : ModuleBase
+{
+    private readonly Cors _configuration;
+    
+    public override HttpResponse? AfterRequest(Context context)
+    {
+        if (context.Request.Method == "OPTIONS")
+            return HttpResponse.Ok().AddCorsHeaders(_configuration, context.Request.Headers.GetFirst("Origin"));
+        return null;
+    }
+
+    public override HttpResponse? AfterEndpoint(Context context, HttpResponse response)
+    {
+        response.AddCorsHeaders(_configuration, context.Request.Headers.GetFirst("Origin"));
+        return null;
+    }
+
+    public CorsFilter(Cors configuration)
+    {
+        _configuration = configuration;
+    }
+}
+
+public class Cors 
 {
     public static readonly string[] DefaultMethods = { "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH" };
     
@@ -14,24 +37,24 @@ public class CORS
     //Access-Control-Allow-Credentials
     private bool Credentials = false;
 
-    public CORS SetMethods(params string[] methods)
+    public Cors SetMethods(params string[] methods)
     {
         AllowedMethods = methods;
         return this;
     }
-    public CORS SetHeaders(params string[] headers)
+    public Cors SetHeaders(params string[] headers)
     {
         AllowedHeaders = headers;
         return this;
     }
 
-    public CORS AddOrigin(string origin)
+    public Cors AddOrigin(string origin)
     {
         AllowedOrigins.Add(origin);
         return this;
     }
 
-    public CORS AllowCredentials(bool allow)
+    public Cors AllowCredentials(bool allow)
     {
         Credentials = allow;
         return this;
@@ -55,11 +78,16 @@ public class CORS
     }
 }
 
-public static class CORSExtention
+public static class CorsExtention 
 {
-    public static HttpResponse AddCorsHeaders(this HttpResponse resp, CORS cors, string? origin = null)
+    public static HttpResponse AddCorsHeaders(this HttpResponse resp, Cors cors, string? origin = null)
     {
         cors.AddHeaders(resp.Headers, origin);
         return resp;
+    }
+
+    public static Pipeline ConfigureCors(this Pipeline pipeline,Cors cors)
+    {
+        return pipeline.AddModule(new CorsFilter(cors), true);
     }
 }

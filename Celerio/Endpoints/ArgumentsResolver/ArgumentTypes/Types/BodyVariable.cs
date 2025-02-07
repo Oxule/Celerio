@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Celerio.InvokeModules;
@@ -19,21 +20,7 @@ public class BodyVariable : ArgumentType
         if (parameter.ParameterType == typeof(byte[]))
             return (Context context, out object? value, out string? reason) =>
             {
-                if (context.Request.BodyRaw == null || context.Request.BodyRaw.Length == 0)
-                {
-                    reason = "No request body";
-                    value = null;
-                    return false;
-                }
-                reason = null;
-                value = context.Request.BodyRaw;
-                return true;
-            };
-        
-        if (parameter.ParameterType == typeof(string))
-            return (Context context, out object? value, out string? reason) =>
-            {
-                if (string.IsNullOrEmpty(context.Request.Body))
+                if (context.Request.Body == null || context.Request.Body.Length == 0)
                 {
                     reason = "No request body";
                     value = null;
@@ -41,6 +28,27 @@ public class BodyVariable : ArgumentType
                 }
                 reason = null;
                 value = context.Request.Body;
+                return true;
+            };
+        
+        if (parameter.ParameterType == typeof(string))
+            return (Context context, out object? value, out string? reason) =>
+            {
+                if (context.Request.Body == null || context.Request.Body.Length == 0)
+                {
+                    reason = "No request body";
+                    value = null;
+                    return false;
+                }
+                var s = Encoding.UTF8.GetString(context.Request.Body);
+                if (string.IsNullOrEmpty(s))
+                {
+                    value = null;
+                    reason = "Request body empty";
+                    return false;
+                }
+                reason = null;
+                value = s;
                 return true;
             };
         
@@ -58,20 +66,28 @@ public class BodyVariable : ArgumentType
         
         return (Context context, out object? value, out string? reason) =>
             {
-                value = null;
-                reason = null;
-                if (string.IsNullOrEmpty(context.Request.Body))
+                if (context.Request.Body == null || context.Request.Body.Length == 0)
                 {
                     reason = "No request body";
+                    value = null;
+                    return false;
+                }
+                var s = Encoding.UTF8.GetString(context.Request.Body);
+                if (string.IsNullOrEmpty(s))
+                {
+                    value = null;
+                    reason = "Request body empty";
                     return false;
                 }
                 try
                 {
-                    value = JsonConvert.DeserializeObject(context.Request.Body, parameter.ParameterType);
+                    reason = "Request body empty";
+                    value = JsonConvert.DeserializeObject(s, parameter.ParameterType);
                     return true;
                 }
                 catch (Exception e)
                 {
+                    value = null;
                     reason = "Wrong request body";
                     return false;
                 }

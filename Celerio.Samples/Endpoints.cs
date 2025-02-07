@@ -15,7 +15,7 @@ public static class Endpoints
     [Route("GET", "/ping")]
     public static HttpResponse Ping()
     {
-        return HttpResponse.Ok("");
+        return HttpResponse.Ok();
     }
     
     [Route("GET", "/echo")]

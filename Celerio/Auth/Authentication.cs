@@ -6,30 +6,30 @@ using Newtonsoft.Json;
 namespace Celerio;
 
 
-public interface IAuthentification
+public interface IAuthentication
 {
-    public object? Authentificate(HttpRequest request);
-    public HttpResponse SendAuthentification(object data);
+    public object? Authenticate(HttpRequest request);
+    public HttpResponse SendAuthentication(object data);
 }
 
-public class Authentification<T> : IAuthentification
+public class Authentication<T> : IAuthentication
 {
     private readonly byte[] key;
     public readonly TimeSpan TokenExpiration = TimeSpan.FromDays(24);
     
-    public object? Authentificate(HttpRequest request)
+    public object? Authenticate(HttpRequest request)
     {
-        var auth = request.Headers["Authorization"];
-        if (auth.Count != 1)
+        if (!request.Headers.TryGetSingle("Authorization", out var auth))
             return null;
+        
 
-        var authParts = auth[0].Split(' ');
+        var authParts = auth.Split(' ');
 
         string t;
         if (authParts.Length == 2)
             t = authParts[1];
         else if (authParts.Length == 1)
-            t = auth[0];
+            t = auth;
         else
             return null;
         
@@ -41,14 +41,14 @@ public class Authentification<T> : IAuthentification
         return token.Data;
     }
     
-    public HttpResponse SendAuthentification(object info)
+    public HttpResponse SendAuthentication(object info)
     {
         var token = new AuthToken<T>(DateTime.UtcNow + TokenExpiration, (T)info);
         var pack = token.Pack(key);
         return new HttpResponse(200, "OK", JsonConvert.SerializeObject(new {code = pack, expires = token.Until}));
     }
     
-    public Authentification(string key)
+    public Authentication(string key)
     {
         this.key = SHA256.HashData(Encoding.UTF8.GetBytes(key));
     }

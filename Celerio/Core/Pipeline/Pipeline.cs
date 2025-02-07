@@ -10,41 +10,11 @@ namespace Celerio;
 
 public class Pipeline
 {
-    public IHttpProvider HttpProvider = new Http11ProtocolProvider();
+    public IHttpProvider HttpProvider = new DefaultHttpProvider();
     
-    public IAuthentification Authentification = new Authentification<string>(DateTime.Now.ToString("O"));
+    public IAuthentication Authentication = new Authentication<string>(DateTime.Now.ToString("O"));
     
-    public CORS Cors = new ();
-    
-    internal void ProcessRequest(NetworkStream stream)
-    {
-        try
-        {
-            while (true)
-            {
-                if (!HttpProvider.GetRequest(stream, out var request, out string reason))
-                {
-                    if(reason == "proto_wrong")
-                        HttpProvider.SendResponse(stream, new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1").SetHeader("Connection", "Upgrade"));
-                    else
-                        HttpProvider.SendResponse(stream, HttpResponse.BadRequest("Wrong request"));
-                    continue;
-                }
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                var resp = PipelineExecution(request, stream.Socket.RemoteEndPoint);
-                HttpProvider.SendResponse(stream, resp);
-                Logging.Log($"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage} in {sw.ElapsedMilliseconds}ms");
-            }
-        }
-        catch (SocketException e)
-        {
-            stream.Close();
-            Logging.Log($"{stream.Socket.RemoteEndPoint} connection closed");
-        }
-    }
-
-    private HttpResponse PipelineExecution(HttpRequest request, EndPoint? remote)
+    internal HttpResponse PipelineExecution(HttpRequest request, EndPoint remote)
     {
         Context context = new Context(this, request, remote);
         
@@ -55,7 +25,7 @@ public class Pipeline
                 return resp;
         }
         
-        context.Identity = Authentification.Authentificate(request);
+        context.Identity = Authentication.Authenticate(request);
 
         var ep = _endpointManager.GetEndpoint(context.Request, out var pathParameters);
         if (ep == null)
@@ -104,13 +74,21 @@ public class Pipeline
 
     #region Modules
 
-        private List<ModuleBase> _modules = new (){new AuthentificatedCheck(), new Caching(), new CorsFilter()};
-        public Pipeline AddModule(ModuleBase module)
+        private List<ModuleBase> _modules = new (){new AuthenticatedCheck(), new Caching()};
+        public Pipeline AddModule(ModuleBase module, bool singleton = false)
         {
+            if (singleton)
+                for (int i = 0; i < _modules.Count; i++)
+                    if (_modules[i].GetType() == module.GetType())
+                    {
+                        _modules.RemoveAt(i);
+                        i--;
+                    }
+            
             module.Initialize(this);
             _modules.Add(module);
             return this;
         }
 
-    #endregion
+        #endregion
 }

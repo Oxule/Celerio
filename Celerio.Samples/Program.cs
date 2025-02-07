@@ -4,9 +4,9 @@ using Newtonsoft.Json;
 
 var pipeline = new Pipeline();
 
-pipeline.Authentification = new Authentification<AuthSample.Credentials>("Your Unknown Secret Key");
+pipeline.Authentication = new Authentication<AuthSample.Credentials>("Your Unknown Secret Key");
 
-pipeline.Cors.AddOrigin("*");
+pipeline.ConfigureCors(new Cors().AddOrigin("localhost:5000").AllowCredentials(true));
 
 Server server = new Server(pipeline);
 server.StartListening(5000);

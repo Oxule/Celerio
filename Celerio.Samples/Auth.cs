@@ -17,7 +17,7 @@ public static class AuthSample
     [Route("GET", "/auth/{id}")]
     public static HttpResponse Auth(Context context, long id)
     {
-        return context.Pipeline.Authentification.SendAuthentification(new Credentials(id));
+        return context.Pipeline.Authentication.SendAuthentication(new Credentials(id));
     }
     
     [Route("GET", "/authLegacy")]
