@@ -100,7 +100,7 @@ public class HttpResponse
     public static HttpResponse Created(string body = "") => new (201, "Created", body);
 
     
-    public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", $"{{\"reason\":\"${reason}\",\"code\":${code}}}");
+    public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", $"{{\"reason\":\"{reason}\",\"code\":{code}}}");
     public static HttpResponse PermanentRedirect(string location) => new HttpResponse(308, "Permanent Redirect").SetHeader("Location", location);
     public static HttpResponse TemporaryRedirect(string location) => new HttpResponse(307, "Temporary Redirect").SetHeader("Location", location);
     
