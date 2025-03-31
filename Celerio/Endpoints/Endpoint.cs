@@ -38,6 +38,7 @@ public class Endpoint
             DynamicParameters = dynamicParams.ToArray();
         }
             
+        //TODO: rewrite to tree
         public static bool Match(RoutePattern pattern, string path, out string[] dynamicValues)
         {
             dynamicValues = new string[pattern.DynamicParameters.Length];

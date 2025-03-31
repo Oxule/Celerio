@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using SpanJson;
+using SpanJson.Resolvers;
 
 namespace Celerio;
 
@@ -11,53 +12,41 @@ public class AuthToken<T>
 
     public string Pack(byte[] key)
     {
-        var obj = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
+        var obj = JsonSerializer.NonGeneric.Utf8.Serialize<ExcludeNullsCamelCaseResolver<byte>>(this);
         
-        HMACSHA1 hmac = new HMACSHA1(key);
+        HMACSHA256 hmac = new HMACSHA256(key);
         var hash = hmac.ComputeHash(obj);
+
+        const string header = "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}";
+
+        var h = Encoding.UTF8.GetBytes(header);
         
-        byte[] tokenBuffer = new byte[obj.Length + 20];
-        Array.Copy(hash, tokenBuffer, 20);
-        Array.Copy(obj, 0, tokenBuffer, 20, obj.Length);
-        
-        var aes = Aes.Create();
-        aes.Key = SHA256.HashData(key);
-        aes.GenerateIV();
-        var iv = aes.IV;
-        
-        var tokenEncrypt = aes.CreateEncryptor().TransformFinalBlock(tokenBuffer, 0, tokenBuffer.Length);
-        
-        byte[] ivBuffer = new byte[tokenEncrypt.Length + 16];
-        Array.Copy(iv, ivBuffer, 16);
-        Array.Copy(tokenEncrypt, 0, ivBuffer, 16, tokenEncrypt.Length);
-        
-        return Convert.ToBase64String(ivBuffer);
+        return Convert.ToBase64String(h)+"."+Convert.ToBase64String(obj)+"."+Convert.ToBase64String(hash);
     }
 
     public static AuthToken<T>? Unpack(string token, byte[] key)
     {
-        var tokenEncrypt = Convert.FromBase64String(token);
-        
-        var aes = Aes.Create();
-        aes.Key = SHA256.HashData(key);
-        var ivBuffer = new byte[16];
-        Array.Copy(tokenEncrypt, ivBuffer, 16);
-        aes.IV = ivBuffer;
-        
-        var tokenBuffer = aes.CreateDecryptor().TransformFinalBlock(tokenEncrypt, 16, tokenEncrypt.Length-16);
-        if (tokenBuffer.Length <= 20)
+        var firstSplit = token.IndexOf('.');
+        if (firstSplit == -1)
             return null;
+        var secondSplit = token.IndexOf('.', firstSplit + 1);
+        if (secondSplit == -1)
+            return null;
+        var chars = token.ToCharArray();
         
-        HMACSHA1 hmac = new HMACSHA1(key);
-        var hash = hmac.ComputeHash(tokenBuffer, 20, tokenBuffer.Length-20);
+        var body = Convert.FromBase64CharArray(chars,firstSplit+1, secondSplit - firstSplit-1);
         
-        if (!CompareArrays(hash,tokenBuffer, 20))
+        HMACSHA256 hmac = new HMACSHA256(key);
+        var hash = hmac.ComputeHash(body);
+
+        var checksum = Convert.FromBase64CharArray(chars, secondSplit+1, token.Length-secondSplit-1);
+        
+        if (!hash.SequenceEqual(checksum))
             return null;
         
         try
         {
-            var obj = JsonConvert.DeserializeObject<AuthToken<T>>(Encoding.UTF8.GetString(tokenBuffer, 20,
-                tokenBuffer.Length - 20));
+            var obj = JsonSerializer.Generic.Utf8.Deserialize<AuthToken<T>,ExcludeNullsCamelCaseResolver<byte>>(body);
             if (obj == null)
                 return null;
             if (obj.Until <= DateTime.UtcNow)
@@ -70,6 +59,7 @@ public class AuthToken<T>
         }
     }
 
+    [JsonConstructor]
     public AuthToken(DateTime until, T data)
     {
         Until = until;
@@ -77,21 +67,7 @@ public class AuthToken<T>
     }
 
     public AuthToken() { }
-
-    private static bool CompareArrays(byte[] a, byte[] b, int length)
-    {
-        if (a.Length < length || b.Length < length)
-            return false;
-
-        for (int i = 0; i < length; i++)
-        {
-            if (a[i] != b[i])
-                return false;
-        }
-        
-        return true;
-    }
-
+    
     private static string ToHex(byte[] bytes)
     {
         StringBuilder sb = new StringBuilder(bytes.Length * 3);

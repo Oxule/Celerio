@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using SpanJson;
 
 namespace Celerio;
 
@@ -64,6 +64,13 @@ public class HttpResponse
         if(body != null)
             SetBody(body);
     }
+    public HttpResponse(int statusCode, string statusMessage, byte[]? body = null)
+    {
+        StatusCode = statusCode;
+        StatusMessage = statusMessage;
+        if(body != null)
+            SetBody(body);
+    }
     
     public HttpResponse(int statusCode, string statusMessage)
     {
@@ -89,10 +96,11 @@ public class HttpResponse
     }
     
     public static HttpResponse Ok(string body = "") => new (200, "OK", body);
+    public static HttpResponse Ok(byte[] body) => new (200, "OK", body);
     public static HttpResponse Created(string body = "") => new (201, "Created", body);
 
     
-    public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", JsonConvert.SerializeObject(new {code, reason}));
+    public static HttpResponse BadRequest(string reason, int code = 0) => new (400, "Bad Request", $"{{\"reason\":\"${reason}\",\"code\":${code}}}");
     public static HttpResponse PermanentRedirect(string location) => new HttpResponse(308, "Permanent Redirect").SetHeader("Location", location);
     public static HttpResponse TemporaryRedirect(string location) => new HttpResponse(307, "Temporary Redirect").SetHeader("Location", location);
     
@@ -101,7 +109,6 @@ public class HttpResponse
     public static HttpResponse Forbidden() => new (403, "Forbidden");
 
     public static HttpResponse NotFound() => new (404, "Not Found");
-    public static HttpResponse NotFound(string reason, int code = 0) => new (404, "Not Found", JsonConvert.SerializeObject(new {code, reason}));
 
     public static HttpResponse InternalServerError(string message) => new (500, "Internal Server Error", message);
 

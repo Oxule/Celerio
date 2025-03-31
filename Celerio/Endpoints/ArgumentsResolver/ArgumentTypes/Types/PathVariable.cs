@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
-using Newtonsoft.Json;
+using System.Text;
+using SpanJson;
+using SpanJson.Resolvers;
 
 namespace Celerio.InvokeModules;
 
@@ -30,7 +32,7 @@ public class PathVariable : ArgumentType
             }
             try
             {
-                value = JsonConvert.DeserializeObject(v, parameter.ParameterType);
+                value = JsonSerializer.NonGeneric.Utf8.Deserialize<ExcludeNullsCamelCaseResolver<byte>>(Encoding.UTF8.GetBytes(v), parameter.ParameterType);
                 return true;
             }
             catch (Exception e)

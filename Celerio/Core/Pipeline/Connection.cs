@@ -16,12 +16,18 @@ internal static class Connection
             {
                 if (!httpProvider.ParseRequest(stream, out var request, out IHttpProvider.HttpParsingError reason))
                 {
-                    if (reason == IHttpProvider.HttpParsingError.Version)
-                        httpProvider.SendResponseAsync(stream,
-                            new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1")
-                                .SetHeader("Connection", "Upgrade"));
-                    else
-                        httpProvider.SendResponseAsync(stream, HttpResponse.BadRequest("Wrong request"));
+                    //TODO: other exceptions
+                    switch (reason)
+                    {
+                        case IHttpProvider.HttpParsingError.Version:
+                            httpProvider.SendResponseAsync(stream,
+                                new HttpResponse(101, "Switching Protocols").SetHeader("Upgrade", "HTTP/1.1")
+                                    .SetHeader("Connection", "Upgrade"));
+                            break;
+                        default:
+                            httpProvider.SendResponseAsync(stream, HttpResponse.BadRequest("Wrong request: " + reason));
+                            break;
+                    }
                     continue;
                 }
 
@@ -43,16 +49,11 @@ internal static class Connection
                 
                 #endregion
                 
-                //Stopwatch sw = new Stopwatch();
-                //sw.Start();
                 var resp = pipelineExecution(request, stream.Socket.RemoteEndPoint!);
 
                 resp.SetHeader("Connection", connection);
                 
                 httpProvider.SendResponseAsync(stream, resp);
-                //sw.Stop();
-                //Logging.Log(
-                    //$"{stream.Socket.RemoteEndPoint} asked {request.Method} {request.URI}\n -[{resp.StatusCode}] {resp.StatusMessage} in {sw.ElapsedMilliseconds}ms");
 
                 if (!keepAlive)
                     break;

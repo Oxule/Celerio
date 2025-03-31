@@ -1,4 +1,5 @@
 ﻿using Celerio;
+using SpanJson;
 
 namespace CelerioSamples;
 
@@ -8,6 +9,7 @@ public static class AuthSample
     {
         public long Id;
 
+        [JsonConstructor]
         public Credentials(long id)
         {
             Id = id;

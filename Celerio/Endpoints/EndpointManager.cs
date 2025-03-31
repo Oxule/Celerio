@@ -1,7 +1,5 @@
 ﻿using System.Reflection;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace Celerio;
 
@@ -16,6 +14,7 @@ public class EndpointManager
 
     public Endpoint? GetEndpoint(HttpRequest request, out string[] pathParameters)
     {
+        //TODO: rewrite to tree
         foreach (var ep in _endpoints)
         {
             if (ep.HttpMethod != request.Method)

@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using Celerio;
-using Newtonsoft.Json;
 
 namespace CelerioSamples;
 

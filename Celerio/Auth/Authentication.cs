@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Celerio;
 
@@ -45,7 +45,7 @@ public class Authentication<T> : IAuthentication
     {
         var token = new AuthToken<T>(DateTime.UtcNow + TokenExpiration, (T)info);
         var pack = token.Pack(key);
-        return new HttpResponse(200, "OK", JsonConvert.SerializeObject(new {code = pack, expires = token.Until}));
+        return HttpResponse.Ok(pack);
     }
     
     public Authentication(string key)

@@ -1,6 +1,5 @@
 ﻿using Celerio;
 using CelerioSamples;
-using Newtonsoft.Json;
 
 var pipeline = new Pipeline();
 

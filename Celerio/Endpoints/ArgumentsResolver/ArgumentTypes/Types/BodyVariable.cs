@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
-using Newtonsoft.Json;
+using SpanJson;
+using SpanJson.Resolvers;
 
 namespace Celerio.InvokeModules;
 
@@ -82,7 +83,7 @@ public class BodyVariable : ArgumentType
                 try
                 {
                     reason = "Request body empty";
-                    value = JsonConvert.DeserializeObject(s, parameter.ParameterType);
+                    value = JsonSerializer.NonGeneric.Utf8.Deserialize<ExcludeNullsCamelCaseResolver<byte>>(context.Request.Body, parameter.ParameterType);
                     return true;
                 }
                 catch (Exception e)

@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+﻿using SpanJson;
+using SpanJson.Resolvers;
 
 namespace Celerio;
 
@@ -9,12 +9,9 @@ public static class ResponseResolver
     {
         if (respRaw != null && respRaw.GetType() == typeof(HttpResponse))
             return (HttpResponse)respRaw;
-        if (respRaw != null && respRaw is string r)
+        if (respRaw is string r)
             return HttpResponse.Ok(r);
             
-        return HttpResponse.Ok(JsonConvert.SerializeObject(respRaw, new JsonSerializerSettings 
-            { 
-                ContractResolver = new CamelCasePropertyNamesContractResolver() 
-            }));
+        return HttpResponse.Ok(JsonSerializer.NonGeneric.Utf8.Serialize<ExcludeNullsCamelCaseResolver<byte>>(respRaw));
     }
 }
