@@ -53,6 +53,7 @@ public class Pipeline
     internal void Build()
     {
         _endpointManager.MapStatic();
+        _endpointManager.BuildTree();
     }
     
     public Pipeline(){}

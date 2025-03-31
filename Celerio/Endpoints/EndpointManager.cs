@@ -12,19 +12,13 @@ public class EndpointManager
         _endpoints.Add(ep);
     }
 
+    
+    
     public Endpoint? GetEndpoint(HttpRequest request, out string[] pathParameters)
     {
-        //TODO: rewrite to tree
-        foreach (var ep in _endpoints)
-        {
-            if (ep.HttpMethod != request.Method)
-                continue;
-            if (Endpoint.RoutePattern.Match(ep.Route, request.URI, out pathParameters))
-            {
-                return ep;
-            }
-        }
-
+        if (_tree.TryMatch(request.URI, out var ep, out pathParameters))
+            return ep;
+        
         pathParameters = Array.Empty<string>();
         return null;
     }
@@ -32,6 +26,7 @@ public class EndpointManager
     public HttpResponse CallEndpoint(Context context) => _invoker.CallEndpoint(context);
     
     private List<Endpoint> _endpoints = new ();
+    private EndpointsTree _tree;
 
     private EndpointInvoker _invoker = new();
 
@@ -60,5 +55,10 @@ public class EndpointManager
                 }
             }
         }
+    }
+
+    internal void BuildTree()
+    {
+        _tree = EndpointsTree.BuildTree(_endpoints);
     }
 }

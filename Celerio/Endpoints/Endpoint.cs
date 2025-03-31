@@ -14,15 +14,15 @@ public class Endpoint
 
     public struct RoutePattern
     {
-        private readonly string[] _parts;
-        private readonly bool[] _dynamic;
+        internal readonly string[] _parts;
+        internal readonly bool[] _dynamic;
         public readonly string[] DynamicParameters;
         public readonly string Route;
 
         public RoutePattern(string pattern)
         {
             Route = pattern;
-            _parts = pattern.Split('/');
+            _parts = pattern.Split('/', StringSplitOptions.RemoveEmptyEntries);
             _dynamic = new bool[_parts.Length];
             var dynamicParams = new List<string>(_parts.Length);
             for (int i = 0; i < _parts.Length; i++)
@@ -38,7 +38,6 @@ public class Endpoint
             DynamicParameters = dynamicParams.ToArray();
         }
             
-        //TODO: rewrite to tree
         public static bool Match(RoutePattern pattern, string path, out string[] dynamicValues)
         {
             dynamicValues = new string[pattern.DynamicParameters.Length];

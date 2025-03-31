@@ -11,12 +11,6 @@ public static class Endpoints
         return HttpResponse.Ok("Hello! This is Celerio Sample!");
     }
     
-    [Route("GET", "/ping")]
-    public static HttpResponse Ping()
-    {
-        return HttpResponse.Ok();
-    }
-    
     [Route("GET", "/echo")]
     public static HttpResponse Ping(string message)
     {
