@@ -1,5 +1,8 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005Cpackage_005CCelerio_002E1_002E0_002E5_002Enupkg/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/SourceGeneratedFilesToSkip/=Celerio_002ESamples_005CCelerio_002EAnalyzers_005CCelerio_002EAnalyzers_002EMainGenerator_005CWrappers_002Eg_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/SourceGeneratedFilesToSkip/=Celerio_005CCelerio_002EAnalyzers_005CCelerio_002EAnalyzers_002EGenerators_002ERoutesGenerator_005CRouter_002Eg_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	
 	
 	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9cd594d2_002D587e_002D49ba_002Dbc66_002D44558119ecac/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Test1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;

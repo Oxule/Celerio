@@ -1,8 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio", "Celerio\Celerio.csproj", "{5257C82B-A968-4E4A-98A7-AA70849BEAF2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Samples", "Celerio.Samples\Celerio.Samples.csproj", "{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Analyzers", "Celerio.Analyzers\Celerio.Analyzers.csproj", "{E83520A6-21AE-40D6-A36A-217053F7A1B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio", "Celerio\Celerio.csproj", "{72676F1E-A2BA-4968-B220-A6970744D20C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,10 +12,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5257C82B-A968-4E4A-98A7-AA70849BEAF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5257C82B-A968-4E4A-98A7-AA70849BEAF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5257C82B-A968-4E4A-98A7-AA70849BEAF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5257C82B-A968-4E4A-98A7-AA70849BEAF2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EADFA2E-D3E6-4970-8FE1-24D473E4A020}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -26,5 +24,13 @@ Global
 		{18DA1DED-FFB8-4667-B259-3D6C9F9E88FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18DA1DED-FFB8-4667-B259-3D6C9F9E88FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18DA1DED-FFB8-4667-B259-3D6C9F9E88FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E83520A6-21AE-40D6-A36A-217053F7A1B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E83520A6-21AE-40D6-A36A-217053F7A1B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E83520A6-21AE-40D6-A36A-217053F7A1B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E83520A6-21AE-40D6-A36A-217053F7A1B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72676F1E-A2BA-4968-B220-A6970744D20C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72676F1E-A2BA-4968-B220-A6970744D20C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72676F1E-A2BA-4968-B220-A6970744D20C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72676F1E-A2BA-4968-B220-A6970744D20C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,124 +1,55 @@
-﻿using System.Globalization;
-using Celerio;
+﻿using Celerio;
 
 namespace CelerioSamples;
 
+using static Result;
+
 public static class Endpoints
 {
-    [Route("GET", "/")]
-    public static HttpResponse Index()
+    [Get("/")]
+    public static Result Index()
     {
-        return HttpResponse.Ok("Hello! This is Celerio Sample!");
+        return Ok().Text("Hello, Celerio 2.0");
     }
     
-    [Route("GET", "/echo")]
-    public static HttpResponse Ping(string message)
+    [Get("/random")]
+    public static Result Random()
     {
-        return HttpResponse.Ok(message);
-    }
-    
-    public enum SampleEnum
-    {
-        A,
-        B
-    }
-    [Route("GET", "/enum")]
-    public static string EnumTest(SampleEnum e)
-    {
-        switch (e)
-        {
-            case SampleEnum.A:
-                return "It's A enum";
-            case SampleEnum.B:
-                return "It's B enum";
-        }
-        return "Awwww..";
-    }
-    
-    [Route("GET", "/sum")]
-    public static int Sum(int a, int b)
-    {
-        return a+b;
-    }
-    
-    [Route("GET", "/force")]
-    public static float Force(float mass, float g = 9.8f)
-    {
-        return mass*g;
+        return Ok().Text($"Hello, User #{new Random().Next(1000000)}!");
     }
 
-    [Route("POST", "/form-data")]
-    public static object? FormData(MultipartData body)
+    [Get("/work")]
+    public static async Task<Result> Workload()
     {
-        return body;
+        await Task.Delay(1000);
+        return Ok().Text("Some work done");
     }
     
-    [Route("GET", "/path/{id}/{name}")]
-    public static (int id, string name) Path(int id, string name)
+    [Get("/path/{variable}/test")]
+    public static Result PathTest()
     {
-        return (id, name);
+        return Ok().Text("Variable path test");
+    }
+    [Get("/path/{variable}")]
+    public static Result Path()
+    {
+        return Ok().Text("Variable path not test (visit /path/variable/test)");
+    }
+    [Get("/path/test")]
+    public static Result PathOverride()
+    {
+        return Ok().Text("Variable path override");
     }
     
-    public record User
+    [Get("/html")]
+    public static Result Html()
     {
-        public string Name;
-        public int Age;
-    }
-    
-    [Route("POST", "/user")]
-    public static User user(User body)
-    {
-        return body;
+        return Ok().Html("<span>Some HTML page.<b><br/>DO NOT USE FOR FRONTEND - USE REACT!!!</b></span>");
     }
 
-    [Route("GET", "/custom")]
-    public static HttpResponse CustomResponse()
+    [Get("/sum")]
+    public static Result Sum(int a, int b)
     {
-        return new HttpResponse(228, "Super Custom Response").SetBody("Super Puper Mega Duper Custom Body")
-            .AddHeader("Custom-Header", "Custom Value 1").AddHeader("Custom-Header", "Custom Value 2");
-    }
-    
-    [Route("GET", "/unicode")]
-    public static string unicodeTest(string line)
-    {
-        return line;
-    }
-    
-    [Route("GET", "/user")]
-    public static User getUser()
-    {
-        return new User { Name = "John", Age = 30 };
-    }
-
-    public enum CalcMethod
-    {
-        Add,
-        Multiply,
-        Subtract,
-        Divide
-    }
-    
-    [Route("GET", "/calc/{method}")]
-    public static float Calc(float a, float b, CalcMethod method)
-    {
-        switch (method)
-        {
-            case CalcMethod.Add:
-                return a+b;
-            case CalcMethod.Subtract:
-                return a-b;
-            case CalcMethod.Multiply:
-                return a*b;
-            case CalcMethod.Divide:
-                return a/b;
-        }
-        return 54;
-    }
-    
-    [Cached(20, 200)]
-    [Route("GET", "/cache")]
-    public static HttpResponse Cached()
-    {
-        return HttpResponse.Ok(DateTime.UtcNow.ToString("G"));
+        return Ok().Text((a + b).ToString());
     }
 }

@@ -1,13 +1,11 @@
-﻿using Celerio;
-using CelerioSamples;
+﻿using System.Net;
+using Celerio;
+using Celerio.Generated;
 
-var pipeline = new Pipeline();
+var r = new Request("GET", "/work/", new Dictionary<string, string>(), new HeaderCollection(), []);
+EndpointRouter.Route(r);
 
-pipeline.Authentication = new Authentication<AuthSample.Credentials>("Your Unknown Secret Key");
+var server = new Server(IPAddress.Any, 5000);
+server.Start();
 
-pipeline.MapGet("/ping", ()=>DateTime.Now);
-
-pipeline.ConfigureCors(new Cors().AddOrigin("localhost:5000").AllowCredentials(true));
-
-Server server = new Server(pipeline);
-server.StartListening(5000);
+await Task.Delay(Timeout.Infinite);

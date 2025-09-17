@@ -6,10 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>CelerioSamples</RootNamespace>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\Generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Celerio\Celerio.csproj" />
+      <ProjectReference Include="..\Celerio.Analyzers\Celerio.Analyzers.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 
 </Project>
