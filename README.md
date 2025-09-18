@@ -1,47 +1,59 @@
-# Celerio
-Celerio is a **Lightweight** and **Fast** Framework for Building HTTP **Web Apps** in **C#**.
+# ⚡ Celerio
+Celerio is a [**Fastest**](BENCHMARKS.MD) Framework for Building HTTP **Web Apps** in **C#**.
+
+* Based on a [Roslyn Incremental Source Generators](https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md)
+* Uses no reflexion **at all**
+
+## ⚠️⚠️ **Do not use in production** ⚠️⚠️
+> Framework still in alpha as a *proof-of-concept*
 
 ## Installation
 Just install nuget package `https://www.nuget.org/packages/Celerio`
 
 ## Usage
-1. At any point in your application, create pipeline instance
 
+1. Create some `public static` controller class
 ```csharp
-    var pipeline = new Pipeline();
+public static class Controller {
+    . . .
+}
 ```
 
-2. If you're going to use authentication, then change crypto keys
+2. In the same file add these imports :
+```csharp
+using Celerio;
+using static Celerio.Result;
+```
+> *The `using static Result` one is optional, but it shortens `Result.Ok()` -> `Ok()`*
+
+3. Create an `public static` endpoint with return type either `Result` or `Task<Result>` and route attribute.
 
 ```csharp
-    pipeline.Authentification = new DefaultAuthentification("Your Unknown Secret Key");
+[Get("/sum")]
+public static Result Sum(int a, int b)
+{
+    return Ok().Text((a+b).ToString());
+}
 ```
 
-3. Configure pipeline any way you want (e.g. Change authentification scheme or add IP blacklist)
-
-4. Create anywhere an endpoint for e.g.
+4. Then just create server instance and run it
 
 ```csharp
-    [Route("GET", "/sum")]
-    public static int Sum(int a, int b)
-    {
-        return a+b;
-    }
-```
-
-5. Then just create server instance and run it
-
-```csharp
-    Server server = new Server(pipeline);
-    await server.StartListening(5000);
+var server = new Server(IPAddress.Any, 5000);
+server.Start();
+await Task.Delay(Timeout.Infinite);
 ```
 
 ## Documentation
 See documentation [here](DOCS.md)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Oxule/Celerio&type=Date)](https://www.star-history.com/#Oxule/Celerio&Date)
+
 ## Contacts
-Oxule
+Oxule (Kirill Filonov)
 
-`ribb2017@mail.ru`
+[ribb2017@mail.ru](mailto://ribb2017@mail.ru)
 
-`@Oxule`
+[Telegram](https://t.me/Oxule)

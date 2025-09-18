@@ -1,8 +1,7 @@
-﻿using Celerio;
+﻿namespace CelerioSamples;
 
-namespace CelerioSamples;
-
-using static Result;
+using Celerio;
+using static Celerio.Result;
 
 public static class Endpoints
 {
