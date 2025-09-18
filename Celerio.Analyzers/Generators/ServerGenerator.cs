@@ -3,26 +3,32 @@
 public static class ServerGenerator
 {
     private const string Server = @"using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Buffers;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-namespace Celerio.Generated {
+
+namespace Celerio.Generated
+{
     public class Server : IDisposable
     {
         private readonly TcpListener _listener;
-        private readonly SemaphoreSlim _concurrency;
+        private readonly int _maxConcurrent;
+        private volatile bool _started;
         private readonly CancellationTokenSource _cts = new();
-        private bool _started = false;
+        private int _currentConnections = 0;
+        private readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
+        private readonly int _readBufferSize;
         private readonly int _perRequestTimeoutMs;
+        private readonly SemaphoreSlim _acceptSemaphore = new(1, 1);
 
-        public Server(IPAddress address, int port, int maxConcurrent = 1000, int perRequestTimeoutMs = 30_000)
+        public Server(IPAddress address, int port, int maxConcurrent = 1000, int readBufferSize = 16 * 1024, int perRequestTimeoutMs = 30_000)
         {
             _listener = new TcpListener(address, port);
-            _concurrency = new SemaphoreSlim(maxConcurrent);
+            _maxConcurrent = Math.Max(1, maxConcurrent);
+            _readBufferSize = readBufferSize;
             _perRequestTimeoutMs = perRequestTimeoutMs;
         }
 
@@ -30,9 +36,14 @@ namespace Celerio.Generated {
         {
             if (_started) throw new InvalidOperationException(""Server already started"");
             _started = true;
-            _listener.Start();
+
+            ThreadPool.GetMinThreads(out var w, out var i);
+            ThreadPool.SetMinThreads(Math.Max(64, w), Math.Max(64, i));
+            try { System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency; } catch { }
+
+            _listener.Start(1024);
             Console.WriteLine($""[server] listening on {_listener.LocalEndpoint}"");
-            Task.Run(AcceptLoop);
+            _ = AcceptLoopAsync();
         }
 
         public async Task StopAsync()
@@ -40,124 +51,152 @@ namespace Celerio.Generated {
             if (!_started) return;
             _cts.Cancel();
             _listener.Stop();
-            await Task.Delay(100);
+            await Task.Delay(50).ConfigureAwait(false);
             _started = false;
         }
 
-        private async Task AcceptLoop()
+        private async Task AcceptLoopAsync()
         {
             while (!_cts.IsCancellationRequested)
             {
                 try
                 {
-                    var tcp = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
-                    await _concurrency.WaitAsync(_cts.Token).ConfigureAwait(false);
-                    _ = Task.Run(() => HandleConnectionAsync(tcp).ContinueWith(t => _concurrency.Release()));
+                    if (Volatile.Read(ref _currentConnections) >= _maxConcurrent)
+                    {
+                        await Task.Delay(1, _cts.Token).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    var socket = await _listener.AcceptSocketAsync().ConfigureAwait(false);
+                    if (Interlocked.Increment(ref _currentConnections) > _maxConcurrent)
+                    {
+                        Interlocked.Decrement(ref _currentConnections);
+                        try { socket.Shutdown(SocketShutdown.Both); } catch { }
+                        try { socket.Close(); } catch { }
+                        continue;
+                    }
+
+                    try
+                    {
+                        socket.NoDelay = true;
+                        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+                        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 0);
+                        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 0);
+                    }
+                    catch { /* non-fatal */ }
+
+                    _ = Task.Run(() => ProcessConnectionAsync(socket));
                 }
                 catch (ObjectDisposedException) { break; }
+                catch (SocketException) when (_cts.IsCancellationRequested) { break; }
+                catch (OperationCanceledException) { break; }
                 catch (Exception ex)
                 {
                     Console.WriteLine($""[accept] error: {ex}"");
+                    await Task.Delay(5).ConfigureAwait(false);
                 }
             }
         }
 
-        private async Task HandleConnectionAsync(TcpClient client)
+        private async Task ProcessConnectionAsync(Socket socket)
         {
-            var remote = client.Client.RemoteEndPoint;
-            using (client)
+            var remote = socket.RemoteEndPoint;
+            var buffer = _arrayPool.Rent(_readBufferSize);
+            try
             {
-                client.NoDelay = true;
-                var ns = client.GetStream();
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+                using var ns = new NetworkStream(socket, ownsSocket: true);
 
-                client.ReceiveTimeout = 60_000;
-                client.SendTimeout = 60_000;
+                ns.ReadTimeout = System.Threading.Timeout.Infinite;
+                ns.WriteTimeout = System.Threading.Timeout.Infinite;
 
                 var keepAlive = true;
-                try
+
+                while (keepAlive && !_cts.IsCancellationRequested)
                 {
-                    while (keepAlive && !_cts.IsCancellationRequested)
+                    using var perReqCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+                    perReqCts.CancelAfter(_perRequestTimeoutMs);
+
+                    Request req = null;
+                    try
                     {
-                        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
-                        linkedCts.CancelAfter(_perRequestTimeoutMs);
-                        Request req = null;
-                        try
-                        {
-                            req = await HttpRequestParser.ParseAsync(ns, linkedCts.Token).ConfigureAwait(false);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            //Console.WriteLine($""[conn:{remote}] request timed out or cancelled"");
-                            await new Result(408).Text(""Request Timeout"").SetHeader(""Connection"", ""close"").WriteResultAsync(ns).ConfigureAwait(false);
-                            break;
-                        }
-                        catch (FormatException fex)
-                        {
-                            //Console.WriteLine($""[conn:{remote}] bad request: {fex.Message}"");
-                            await new Result(400).Text(""Bad Request"").WriteResultAsync(ns).ConfigureAwait(false);
-                            break;
-                        }
-                        catch (IOException ioex)
-                        {
-                            //Console.WriteLine($""[conn:{remote}] io error while reading: {ioex.Message}"");
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            //Console.WriteLine($""[conn:{remote}] unexpected error while parsing: {ex}"");
-                            await new Result(500).Text(""Internal Server Error"").SetHeader(""Connection"", ""close"").WriteResultAsync(ns).ConfigureAwait(false);
-                            break;
-                        }
-
-                        if (req == null)
-                        {
-                            break;
-                        }
-
-                        if (req.Headers.Get(""Connection"") is string connHeader && connHeader.Equals(""close"", StringComparison.OrdinalIgnoreCase))
-                            keepAlive = false;
-
-                        //Console.WriteLine($""{req.Method} {req.Path}"");
-
-                        Result result;
-                        try
-                        {
-                            result = await EndpointRouter.Route(req).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($""[conn:{remote}] handler threw: {ex}"");
-                            await new Result(500).Text(""Internal Server Error"").SetHeader(""Connection"", ""close"").WriteResultAsync(ns).ConfigureAwait(false);
-                            break;
-                        }
-
-                        result.SetHeader(""Connection"", keepAlive?""keep-alive"":""close"");
-
-                        await result.WriteResultAsync(ns);
-
-                        if (!keepAlive)
-                        {
-                            break;
-                        }
+                        req = await HttpRequestParser.ParseAsync(ns, perReqCts.Token).ConfigureAwait(false);
                     }
-                }
-                finally
-                {
-                    try { ns.Close(); } catch { }
-                    try { client.Close(); } catch { }
-                    //Console.WriteLine($""[conn:{remote}] closed"");
+                    catch (OperationCanceledException)
+                    {
+                        try
+                        {
+                            await new Result(408).Text(""Request Timeout"").SetHeader(""Connection"", ""close"").WriteResultAsync(ns).ConfigureAwait(false);
+                        }
+                        catch { }
+                        break;
+                    }
+                    catch (FormatException)
+                    {
+                        try { await new Result(400).Text(""Bad Request"").WriteResultAsync(ns).ConfigureAwait(false); } catch { }
+                        break;
+                    }
+                    catch (IOException)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        try { await new Result(500).Text(""Internal Server Error"").SetHeader(""Connection"", ""close"").WriteResultAsync(ns).ConfigureAwait(false); } catch { }
+                        Console.WriteLine($""[conn:{remote}] unexpected error while parsing: {ex}"");
+                        break;
+                    }
+
+                    if (req == null) break;
+
+                    if (req.Headers.Get(""Connection"") is string connHeader && connHeader.Equals(""close"", StringComparison.OrdinalIgnoreCase))
+                        keepAlive = false;
+
+                    Result result;
+                    try
+                    {
+                        result = await EndpointRouter.Route(req).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($""[conn:{remote}] handler threw: {ex}"");
+                        try { await new Result(500).Text(""Internal Server Error"").SetHeader(""Connection"", ""close"").WriteResultAsync(ns).ConfigureAwait(false); } catch { }
+                        break;
+                    }
+
+                    result.SetHeader(""Connection"", keepAlive ? ""keep-alive"" : ""close"");
+
+                    try
+                    {
+                        await result.WriteResultAsync(ns).ConfigureAwait(false);
+                    }
+                    catch (Exception)
+                    {
+                        break;
+                    }
+
+                    if (!keepAlive) break;
                 }
             }
+            finally
+            {
+                try { _arrayPool.Return(buffer); } catch { }
+                Interlocked.Decrement(ref _currentConnections);
+                try { socket.Dispose(); } catch { }
+                //Console.WriteLine($""[conn:{remote}] closed"");
+            }
         }
+
         public void Dispose()
         {
             _cts.Cancel();
-            _listener.Server?.Dispose();
-            _concurrency?.Dispose();
+            try { _listener.Server?.Dispose(); } catch { }
+            try { _acceptSemaphore?.Dispose(); } catch { }
             _cts?.Dispose();
         }
     }
-}";
+}
+";
     
     public static string GenerateServer()
     {
