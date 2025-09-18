@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Globalization;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
@@ -46,7 +47,17 @@ public static class Body
 {
     public static DefaultResultBody Text(string str) => new (str);
     public static Result Text(this Result result, string str) => result.SetBody(Text(str));
-    
+    public static Result Text<T>(this Result result, T value)
+        where T : IFormattable
+    {
+        var s = value.ToString(null, CultureInfo.InvariantCulture);
+        return result.Text(s);
+    }
+    public static Result Text(this Result result, object value)
+    {
+        var s = value.ToString();
+        return result.Text(s);
+    }
     
     //TODO: Rewrite to custom serializer
     public static DefaultResultBody Json(object obj) => new (JsonSerializer.Serialize(obj), "application/json");

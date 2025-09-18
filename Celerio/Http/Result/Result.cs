@@ -10,18 +10,14 @@ public class Result
     public BaseResultBody Body = new ();
 
     public HeaderCollection Headers = new ();
-
-    private static async Task WriteDefaultHeadersAsync(StreamWriter writer)
-    {
-        await writer.WriteLineAsync($"Date: {DateTime.UtcNow.ToString("r")}");
-        await writer.WriteLineAsync("Server: Celerio/2.0");
-    }
     
     public async Task WriteResultAsync(NetworkStream stream)
     {
         var writer = new StreamWriter(stream, Encoding.ASCII);
+        /*
         await writer.WriteLineAsync($"HTTP/1.1 {StatusCode} {Statuses.Status[StatusCode]}");
-        await WriteDefaultHeadersAsync(writer);
+        */
+        await writer.WriteLineAsync($"HTTP/1.1 {StatusCode} OPT\nDate: {DateTime.UtcNow.ToString("r")}\nServer: Celerio/2.0");
         await Headers.WriteHeadersAsync(writer);
         await Body.WriteBodyHeadersAsync(writer);
         await writer.WriteLineAsync();

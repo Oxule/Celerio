@@ -47,8 +47,8 @@ public static class Endpoints
     }
 
     [Get("/sum")]
-    public static Result Sum(int a, int b)
+    public static Result Sum(int a, int b = 5)
     {
-        return Ok().Text((a + b).ToString());
+        return Ok().Text(a+b);
     }
 }
