@@ -15,10 +15,10 @@ public static class IMethodSymbolExtention
         
         foreach (var attr in methodSymbol.GetAttributes())
         {
-            var fullName = attr.AttributeClass?.ToString();
+            var fullName = attr?.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             if (fullName == null) continue;
 
-            if (fullName == "Celerio.RouteAttribute")
+            if (fullName == "global::Celerio.RouteAttribute")
             {
                 if (attr.ConstructorArguments.Length == 2)
                 {
@@ -27,13 +27,13 @@ public static class IMethodSymbolExtention
                     return httpMethod != null ? (httpMethod, FixRoute(path)) : null;
                 }
             }
-            else if (fullName is "Celerio.GetAttribute"
-                     or "Celerio.PostAttribute"
-                     or "Celerio.PutAttribute"
-                     or "Celerio.DeleteAttribute"
-                     or "Celerio.PatchAttribute")
+            else if (fullName is "global::Celerio.GetAttribute"
+                     or "global::Celerio.PostAttribute"
+                     or "global::Celerio.PutAttribute"
+                     or "global::Celerio.DeleteAttribute"
+                     or "global::Celerio.PatchAttribute")
             {
-                var httpMethod = fullName.Replace("Celerio.", "").Replace("Attribute", "").ToUpperInvariant();
+                var httpMethod = fullName.Replace("global::Celerio.", "").Replace("Attribute", "").ToUpperInvariant();
                 if (attr.ConstructorArguments.Length == 1)
                 {
                     var path = attr.ConstructorArguments[0].Value?.ToString() ?? "";

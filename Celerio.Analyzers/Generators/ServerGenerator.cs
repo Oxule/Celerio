@@ -1,4 +1,4 @@
-﻿namespace Celerio.Analyzers.Generators.EndpointGenerator;
+﻿namespace Celerio.Analyzers.Generators;
 
 public static class ServerGenerator
 {
@@ -155,7 +155,7 @@ namespace Celerio.Generated
                     Result result;
                     try
                     {
-                        result = await EndpointRouter.Route(req).ConfigureAwait(false);
+                        result = await global::Celerio.Generated.EndpointRouter.Route(req).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {

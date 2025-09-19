@@ -28,7 +28,7 @@ public class ReturnTypeAnalyzerAnalyzer : DiagnosticAnalyzer
         context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
     }
 
-    private static readonly string[] Allowed = ["Celerio.Result","Result","System.Threading.Tasks.Task<Result>", "System.Threading.Tasks.Task<Celerio.Result>","Task<Result>", "Task<Celerio.Result>"];
+    private static readonly string[] Allowed = ["global::Celerio.Result", "global::System.Threading.Tasks.Task<global::Celerio.Result>"];
     
     private static void AnalyzeMethod(SymbolAnalysisContext context)
     {
@@ -41,7 +41,7 @@ public class ReturnTypeAnalyzerAnalyzer : DiagnosticAnalyzer
         if(route == null)
             return;
         
-        if (!Allowed.Any(x=>x == methodSymbol.ReturnType.ToString()))
+        if (!Allowed.Any(x=>x == methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
         {
             var syntaxRef = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
             if (syntaxRef != null)

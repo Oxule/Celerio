@@ -3,7 +3,7 @@ using System.Text;
 using Celerio.Analyzers.GenerationContext;
 using Microsoft.CodeAnalysis;
 
-namespace Celerio.Analyzers.Generators.EndpointGenerator;
+namespace Celerio.Analyzers.Generators;
 
 public static class RouterGenerator
 {
@@ -56,12 +56,12 @@ public static class RouterGenerator
             return;
         }
 
-        var t = Tab(tab);
+        var t = Tabs.Tab(tab);
         var p = TraceNodePointer(node);
         string invoke = "";
         if (node.Endpoint != null)
             invoke =
-                $"return await EndpointWrappers.{node.Endpoint.Symbol.GetFullSymbolPath().Replace('.', '_')}_Wrapper({string.Join(", ", ["request", ..TracePathVariables(node).Select(x => "path_" + x)])});";
+                $"return await global::Celerio.Generated.EndpointWrappers.{node.Endpoint.Symbol.GetFullSymbolPath().Replace('.', '_')}_Wrapper({string.Join(", ", ["request", ..TracePathVariables(node).Select(x => "path_" + x)])});";
 
         if (node.Type == TrieNode.TrieNodeType.Static)
         {
@@ -149,8 +149,6 @@ public static class RouterGenerator
 
         return [];
     }
-
-    private static string Tab(int count) => new('\t', count);
 
     private static string TraceNodePointer(TrieNode node)
     {
