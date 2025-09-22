@@ -592,20 +592,6 @@ public static Result GetData() => Ok().Json(Success(myData));
 - No dependency injection integration
 - Minimal support for file uploads
 
-**Performance Considerations**:
-- Memory pooling may not scale as expected in all scenarios
-- Buffer sizes may need fine-tuning for specific workloads
-- Threading model optimized for high concurrency but simple endpoints
-
-### Planned Enhancements
-
-- [ ] Comprehensive parameter binding system
-- [ ] Middleware pipeline support
-- [ ] Built-in dependency injection
-- [ ] File upload handling
-- [ ] HTTPS support
-- [ ] Authentication framework
-
 ## Contributing
 
 Celerio is open-source and welcomes contributions. The project follows standard .NET development practices.
