@@ -30,7 +30,7 @@ public static class Endpoints
         return Ok().Text("Variable path test");
     }
     [Get("/path/{variable}")]
-    public static Result Path()
+    public static Result Path(string variable)
     {
         return Ok().Text("Variable path not test (visit /path/variable/test)");
     }
@@ -47,8 +47,14 @@ public static class Endpoints
     }
 
     [Get("/sum")]
-    public static Result Sum(int a, int b = 5)
+    public static Result Sum(int a, int b)
     {
         return Ok().Text(a+b);
+    }
+
+    [Get("/any/*")]
+    public static Result Any()
+    {
+        return Ok();
     }
 }

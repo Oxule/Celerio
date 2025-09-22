@@ -8,6 +8,12 @@ public static class IMethodSymbolExtention
     {
         string FixRoute(string route)
         {
+            route = System.Text.RegularExpressions.Regex.Replace(route, @"\*", match =>
+            {
+                int asteriskIndex = 1;
+                return $"{{unknown_{asteriskIndex++}}}";
+            });
+
             if (raw)
                 return route;
             return PreprocessRoute(route);
