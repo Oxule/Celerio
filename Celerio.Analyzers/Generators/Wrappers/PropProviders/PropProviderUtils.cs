@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Celerio.Analyzers.Generators;
@@ -12,7 +13,7 @@ public static class PropProviderUtils
         {
             var underlying = named.TypeArguments[0];
             var inner = GenerateDeserializerForType(underlying, getter);
-            return $"string.IsNullOrEmpty({getter}) ? null : {inner}";
+            return inner;
         }
 
         switch (typeSymbol.SpecialType)
@@ -49,6 +50,17 @@ public static class PropProviderUtils
                 return $"JsonSerializer.Deserialize<object>({getter})";
         }
 
+        if (typeSymbol is IArrayTypeSymbol arrayType)
+        {
+            var elementType = arrayType.ElementType;
+            if (elementType.SpecialType == SpecialType.System_Byte)
+            {
+                return $"Convert.FromBase64String({getter})";
+            }
+            var innerDeserializer = GenerateDeserializerForType(elementType, "PLACEHOLDER");
+            return $"{getter}.Split(',').Select(s => s.Trim()).Select(s => {innerDeserializer.Replace("PLACEHOLDER", "s")}).ToArray()";
+        }
+
         var fullName = typeSymbol.ToString();
 
         if (fullName == "System.DateTime")
@@ -61,8 +73,6 @@ public static class PropProviderUtils
             return $"Guid.Parse({getter})";
         if (fullName == "System.Uri")
             return $"new Uri({getter}, UriKind.RelativeOrAbsolute)";
-        if (fullName == "System.Byte[]")
-            return $"Convert.FromBase64String({getter})";
 
         if (typeSymbol.TypeKind == TypeKind.Enum)
         {
@@ -72,10 +82,10 @@ public static class PropProviderUtils
         return $"JsonSerializer.Deserialize<{typeSymbol}>({getter})";
     }
     
-    public static string FormatConstant(object? value, string targetTypeName)
+    public static string FormatConstant(ITypeSymbol symbol, object? value)
     {
         if (value == null) return "null";
-
+        
         switch (Type.GetTypeCode(value.GetType()))
         {
             case TypeCode.String:
@@ -95,6 +105,10 @@ public static class PropProviderUtils
                 var s = Convert.ToString(value, CultureInfo.InvariantCulture);
                 if (value is long) return s + "L";
                 if (value is ulong) return s + "UL";
+                if (symbol.TypeKind == TypeKind.Enum)
+                {
+                    return $"({symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){s!}";
+                }
                 return s!;
             case TypeCode.Single:
                 return ((float)value).ToString(CultureInfo.InvariantCulture) + "f";
@@ -103,13 +117,6 @@ public static class PropProviderUtils
             case TypeCode.Decimal:
                 return ((decimal)value).ToString(CultureInfo.InvariantCulture) + "m";
             default:
-                var t = value.GetType();
-                if (t.IsEnum)
-                {
-                    var underlying = Convert.ToInt64(value).ToString(CultureInfo.InvariantCulture);
-                    return $"({targetTypeName}){underlying}";
-                }
-
                 return value.ToString() ?? "null";
         }
     }

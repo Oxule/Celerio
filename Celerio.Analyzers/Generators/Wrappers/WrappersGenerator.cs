@@ -52,7 +52,7 @@ public static class WrappersGenerator
     {
         var sb = new StringBuilder();
         sb.AppendLine("using System.Text.Json;");
-        sb.AppendLine("using Celerio.Shared;");
+        sb.AppendLine("using Celerio;");
 
         sb.AppendLine("#pragma warning disable CS1998");
         sb.AppendLine("namespace Celerio.Generated {\n\tpublic static class EndpointWrappers {");
