@@ -1,4 +1,6 @@
-﻿namespace Celerio;
+﻿using System.Net;
+
+namespace Celerio;
 
 public class Request
 {
@@ -7,6 +9,7 @@ public class Request
     public Dictionary<string, string> Query;
     public HeaderCollection Headers;
     public byte[] Body;
+    public EndPoint Remote;
 
     public Request(string method, string path, Dictionary<string, string> query, HeaderCollection headers, byte[] body)
     {

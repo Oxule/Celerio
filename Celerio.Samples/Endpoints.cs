@@ -52,6 +52,12 @@ public static class Endpoints
         return Ok().Text(a+b);
     }
 
+    [Get("/ip")]
+    public static Result Ip(Request request)
+    {
+        return Ok().Text(request.Remote.ToString());
+    }
+    
     [Get("/any/*")]
     public static Result Any()
     {

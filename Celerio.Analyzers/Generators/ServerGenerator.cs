@@ -149,6 +149,8 @@ namespace Celerio.Generated
 
                     if (req == null) break;
 
+                    req.Remote = remote;
+
                     if (req.Headers.Get(""Connection"") is string connHeader && connHeader.Equals(""close"", StringComparison.OrdinalIgnoreCase))
                         keepAlive = false;
 

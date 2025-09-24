@@ -22,5 +22,6 @@ namespace Celerio.Analyzers.Generators;
         
         public static List<PropProvider> Registry = new()
         {
+            SystemPropProviders.RequestProvider
         };
     }
