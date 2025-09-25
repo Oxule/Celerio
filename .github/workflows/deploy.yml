@@ -1,41 +1,44 @@
-name: "Deploy"
+name: Publish NuGet Packages
 
 on:
   push:
     tags:
-    - 'v*'
-
-env:
-  NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
-  PACKAGE_OUTPUT_DIRECTORY: 'nugets'
-  GITHUB_NUGET_SOURCE: "https://nuget.pkg.github.com/${{ github.repository_owner }}/Celerio/index.json"
+      - 'v?[0-9]+.[0-9]+.[0-9]+*'
 
 jobs:
-  deploy:
-    name: 'Deploy'
-    runs-on: 'windows-latest'
+  build-and-publish:
+    name: Build and publish packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: 'Checkout'
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 'Install dotnet'
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x.x'
+          dotnet-version: '8.0.0'
 
-      - name: Install NuGet CLI
-        run: choco install nuget.commandline
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+        with:
+          nuget-version: 'latest'
 
-      - name: 'Get Version'
-        id: version
-        uses: battila7/get-version-action@v2
+      - name: Extract version from tag
+        run: echo "VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')" >> $GITHUB_ENV
 
-      - name: 'Run pack script'
+      - name: Build projects and pack from .nuspec
         run: |
-          pack.bat ${{ steps.version.outputs.version-without-v }}
+          dotnet build ./Celerio.Analyzers/Celerio.Analyzers.csproj -c Release
+          dotnet build ./Celerio.Shared/Celerio.Shared.csproj -c Release
+          nuget pack ./Celerio.Analyzers/Celerio.nuspec -Properties Configuration=Release -Version ${{ env.VERSION }} -OutputDirectory ./nugets
 
-      - name: 'Push package to Nuget'
-        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }}
+      - name: Publish to NuGet.org
+        run: dotnet nuget push "./nugets/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json"
 
-      - name: 'Push package to GitHub Packages'
-        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s ${{ env.GITHUB_NUGET_SOURCE }}
+      - name: Publish to GitHub Packages
+        run: dotnet nuget push "./nugets/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --skip-duplicate
+
