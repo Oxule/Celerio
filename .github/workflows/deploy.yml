@@ -28,7 +28,8 @@ jobs:
           nuget-version: 'latest'
 
       - name: Extract version from tag
-        run: echo "VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')" >> $GITHUB_ENV
+        shell: pwsh
+        run: echo "VERSION=$(${env:GITHUB_REF_NAME} -replace '^v','')" >> $env:GITHUB_ENV
 
       - name: Build projects and pack from .nuspec
         run: |
