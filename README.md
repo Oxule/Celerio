@@ -6,7 +6,7 @@
 </p>
 
 
-Celerio is a [**Fastest**](BENCHMARKS.MD) Framework for Building HTTP **Web Apps** in **C#**.
+Celerio is a [**Fast**](BENCHMARKS.MD) Framework for Building HTTP **Web Apps** in **C#**.
 
 * [X1.5 times faster than an ASP.NET](BENCHMARKS.MD)
 * Based on a [Roslyn Incremental Source Generators](https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md)
