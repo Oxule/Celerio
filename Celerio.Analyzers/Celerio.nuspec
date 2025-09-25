@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package >
+    <metadata>
+        <id>Celerio</id>
+        <version>2.0.0</version>
+        <title>Celerio</title>
+        <authors>Oxule</authors>
+        <owners>Oxule</owners>
+        <license type="expression">MIT</license>
+        <projectUrl>https://github.com/Oxule/Celerio</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Celerio is a Fastest Framework for Building HTTP Web Apps in C#.</description>
+        <summary>Celerio — lightweight HTTP server framework + Roslyn analyzers.</summary>
+        <tags>Celerio Web Http Server Fast Lightweight Analyzers Roslyn</tags>
+        <copyright>Oxule</copyright>
+        <language>en-US</language>
+        <dependencies>
+            <group targetFramework=".NETStandard2.0">
+                <dependency id="System.Text.Json" version="9.0.0" />
+            </group>
+        </dependencies>
+    </metadata>
+
+    <files>
+        <file src="bin\Release\netstandard2.0\Celerio.Analyzers.dll" target="analyzers/dotnet/cs" />
+        <file src="bin\Release\netstandard2.0\Celerio.Analyzers.pdb" target="analyzers/dotnet/cs" />
+
+        <file src="..\Celerio.Shared\bin\Release\netstandard2.0\Celerio.Shared.dll" target="lib\netstandard2.0\" />
+        <file src="..\Celerio.Shared\bin\Release\netstandard2.0\Celerio.Shared.pdb" target="lib\netstandard2.0\" />
+
+        <file src="..\README.md" target="" />
+        <file src="AnalyzerReleases.Shipped.md" target="" />
+        <file src="AnalyzerReleases.Unshipped.md" target="" />
+    </files>
+</package>

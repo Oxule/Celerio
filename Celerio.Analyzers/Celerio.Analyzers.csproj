@@ -6,32 +6,33 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>true</ImplicitUsings>
         <LangVersion>Latest</LangVersion>
-<!--
-        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
--->
+
+        <Version>2.0.0</Version>
+        <Title>Celerio</Title>
+        <Authors>Oxule</Authors>
+        <Description>Celerio is a Fastest Framework for Building HTTP Web Apps in C#.</Description>
+        <PackageProjectUrl>https://www.nuget.org/packages/Celerio</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Oxule/Celerio</RepositoryUrl>
+        <Company>Oxule</Company>
+        <PackageTags>Celerio Web Http Server Fast Lightweight Analyzers Roslyn</PackageTags>
+        <Copyright>Oxule</Copyright>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageId>Celerio</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true"
-              PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
         <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
         <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     </ItemGroup>
-    
+
     <ItemGroup>
-<!--
-        <PackageReference Include="System.Collections.Immutable" Version="9.0.0" PrivateAssets="all"/>
--->
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" PrivateAssets="all" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <ProjectReference Include="..\Celerio\Celerio.csproj" />
     </ItemGroup>
 
 </Project>

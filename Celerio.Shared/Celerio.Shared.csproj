@@ -5,11 +5,11 @@
         <LangVersion>Latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Celerio.Shared</RootNamespace>
+        <RootNamespace>Celerio</RootNamespace>
     </PropertyGroup>
-
+    
     <ItemGroup>
-      <PackageReference Include="System.Text.Json" Version="10.0.0-rc.1.25451.107" />
+      <PackageReference Include="System.Text.Json" Version="9.0.0" />
     </ItemGroup>
 
 </Project>

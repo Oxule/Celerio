@@ -12,6 +12,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Celerio.Analyzers\Celerio.Analyzers.csproj" OutputItemType="Analyzer" />
+      <ProjectReference Include="..\Celerio.Shared\Celerio.Shared.csproj" />
     </ItemGroup>
 
 </Project>

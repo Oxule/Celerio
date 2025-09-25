@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Samples", "Celerio.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Analyzers", "Celerio.Analyzers\Celerio.Analyzers.csproj", "{E83520A6-21AE-40D6-A36A-217053F7A1B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio", "Celerio\Celerio.csproj", "{72676F1E-A2BA-4968-B220-A6970744D20C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Shared", "Celerio.Shared\Celerio.Shared.csproj", "{72676F1E-A2BA-4968-B220-A6970744D20C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
