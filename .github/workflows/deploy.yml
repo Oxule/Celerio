@@ -38,7 +38,7 @@ jobs:
           nuget pack ./Celerio.Analyzers/Celerio.nuspec -Version ${{ env.VERSION }} -Properties Configuration=Release -OutputDirectory ./nugets
 
       - name: Publish to NuGet.org
-        run: dotnet nuget push "./nugets/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json"
+        run: dotnet nuget push "./nugets/*.nupkg" --api-key ${{ secrets.NUGET_TOKEN }} --source "https://api.nuget.org/v3/index.json"
 
       - name: Publish to GitHub Packages
         run: dotnet nuget push "./nugets/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --skip-duplicate
