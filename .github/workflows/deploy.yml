@@ -1,0 +1,43 @@
+name: "Deploy"
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+    - 'v*'
+
+env:
+  NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
+  PACKAGE_OUTPUT_DIRECTORY: 'nugets'
+  GITHUB_NUGET_SOURCE: "https://nuget.pkg.github.com/${{ github.repository_owner }}/Celerio/index.json"
+
+jobs:
+  deploy:
+    name: 'Deploy'
+    runs-on: 'windows-latest'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Install dotnet'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x.x'
+
+      - name: Install NuGet CLI
+        run: choco install nuget.commandline
+
+      - name: 'Get Version'
+        id: version
+        uses: battila7/get-version-action@v2
+
+      - name: 'Run pack script'
+        run: |
+          pack.bat ${{ steps.version.outputs.version-without-v }}
+
+      - name: 'Push package to Nuget'
+        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }}
+
+      - name: 'Push package to GitHub Packages'
+        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s ${{ env.GITHUB_NUGET_SOURCE }}
