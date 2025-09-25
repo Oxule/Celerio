@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/Oxule/Celerio/main/Design/logo_full.png" alt="Celerio Logo"/>
+    <img src="https://raw.githubusercontent.com/Oxule/Celerio/main/Design/logo_full.svg" alt="Celerio Logo"/>
     <img alt="NuGet Downloads" src="https://img.shields.io/nuget/dt/Celerio">
     <img alt="NuGet Version" src="https://img.shields.io/nuget/vpre/Celerio">
     <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Oxule/Celerio">
