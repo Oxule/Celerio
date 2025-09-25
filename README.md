@@ -1,4 +1,11 @@
-# ⚡ Celerio
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Oxule/Celerio/main/Design/logo_full.png" alt="Celerio Logo"/>
+    <img alt="NuGet Downloads" src="https://img.shields.io/nuget/dt/Celerio">
+    <img alt="NuGet Version" src="https://img.shields.io/nuget/vpre/Celerio">
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Oxule/Celerio">
+</p>
+
+
 Celerio is a [**Fastest**](BENCHMARKS.MD) Framework for Building HTTP **Web Apps** in **C#**.
 
 * [X1.5 times faster than an ASP.NET](BENCHMARKS.MD)

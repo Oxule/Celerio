@@ -2,7 +2,7 @@
 <package >
     <metadata>
         <id>Celerio</id>
-        <version>2.0.0</version>
+        <version>2.0.5</version>
         <title>Celerio</title>
         <authors>Oxule</authors>
         <owners>Oxule</owners>
@@ -14,6 +14,7 @@
         <tags>Celerio Web Http Server Fast Lightweight Analyzers Roslyn</tags>
         <copyright>Oxule</copyright>
         <language>en-US</language>
+        <icon>images/logo.png</icon>
         <dependencies>
             <group targetFramework=".NETStandard2.0">
                 <dependency id="System.Text.Json" version="9.0.0" />
@@ -31,5 +32,7 @@
         <file src="..\README.md" target="" />
         <file src="AnalyzerReleases.Shipped.md" target="" />
         <file src="AnalyzerReleases.Unshipped.md" target="" />
+
+        <file src="..\Design\logo.png" target="images/logo.png" />
     </files>
 </package>
