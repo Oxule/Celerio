@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using Celerio.Analyzers.Generators;
-using Celerio.Analyzers.Generators.EndpointGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -52,13 +51,23 @@ public class MainGenerator : IIncrementalGenerator
             var generationContext = new GenerationContext();
             generationContext.Endpoints = endpoints.ToList();
             generationContext.Types = new (types.ToList());
-            
-            spc.AddSource("Router.g.cs", RouterGenerator.GenerateRouter(generationContext.Endpoints));
-            spc.AddSource("Wrappers.g.cs", WrappersGenerator.GenerateWrappers(generationContext.Endpoints));
-            spc.AddSource("Server.g.cs", ServerGenerator.GenerateServer());
-            
-            var sb = new StringBuilder();
 
+            var sb = new StringBuilder();
+            
+            try
+            {
+                spc.AddSource("Router.g.cs", RouterGenerator.GenerateRouter(generationContext.Endpoints));
+                spc.AddSource("Wrappers.g.cs", WrappersGenerator.GenerateWrappers(generationContext.Endpoints));
+                spc.AddSource("Server.g.cs", ServerGenerator.GenerateServer());
+            }
+            catch (Exception e)
+            {
+                sb.AppendLine("//ERROR");
+                sb.AppendLine("/*");
+                sb.AppendLine(e.ToString());
+                sb.AppendLine("*/");
+            }
+            
             sb.AppendLine("namespace Celerio.Generated { public static class Test { public static void T() {} } }");
             
 
