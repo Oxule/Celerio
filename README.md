@@ -55,6 +55,11 @@ await Task.Delay(Timeout.Infinite);
 ## Documentation
 See documentation [here](DOCS.md)
 
+## Contributing
+
+Since there’s currently no reliable extension system, I warmly welcome any contributions — bug fixes, new features, docs improvements, or feedback.
+Just fork the repo, create a branch, make your changes, and open a Pull Request. 💖
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Oxule/Celerio&type=Date)](https://www.star-history.com/#Oxule/Celerio&Date)
