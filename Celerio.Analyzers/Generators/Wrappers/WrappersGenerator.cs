@@ -52,6 +52,7 @@ public static class WrappersGenerator
     {
         var sb = new StringBuilder();
         sb.AppendLine("using System.Text.Json;");
+        sb.AppendLine("using System.Text.RegularExpressions;");
         sb.AppendLine("using Celerio;");
 
         sb.AppendLine("#pragma warning disable CS1998");

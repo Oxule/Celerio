@@ -134,10 +134,6 @@ Example precedence (highest to lowest):
 [Get("/api/users")]              // 3. Base path (shortest)
 ```
 
-### Parameter Binding
-
-Celerio automatically binds request data to method parameters in specific order of precedence.
-
 #### Path Parameters
 
 Route variables are bound directly to method parameters:
@@ -164,19 +160,53 @@ Then it will be converted to this:
 > 
 >`/users/user_{firstName}` will work as well, so `/users/user_andrew` will match
 
-#### Query Parameters
+#### PropProviders
 
-URL query string parameters are automatically resolved:
+PropProviders automatically map data from HTTP requests to your method parameters. They work invisibly, letting you declare parameters simply without extra boilerplate.
+
+- **RequestProvider**: If your method has a parameter of type `Celerio.Request`, it receives the entire request object — headers, body, method, everything.
+- **BodyProvider**: For parameters named `body` (case-insensitive). Takes the request body and converts it:
+    - To `byte[]` — leaves as-is
+    - To `string` — decodes as UTF-8
+    - To any object — deserializes from JSON
+      If body is empty, uses default value or returns error.
+- **PathProvider**: Automatically extracts parameters from URL paths, like `{userId}`. Converts strings to the target type: numbers, strings, Guid, dates, etc.
+- **QueryProvider**: Gets parameters from query strings, like `?limit=10&name=test`. If required and not found — returns 400 error. Supports default values.
+
+PropProviders are applied by priority order, so request bodies won't accidentally collide with query parameters.
+
+#### Parameter Validation
+
+PropValidators check parameter correctness using standard attributes from `System.ComponentModel.DataAnnotations`. If checks fail, returns a 400 error with a clear message, without executing the method.
+
+##### String Validators
+
+- **Length**: String length within `[min, max]` range
+- **MinLength**: Minimum string length
+- **MaxLength**: Maximum string length
+- **RegularExpression**: Regex pattern validation
+- **EmailAddress**: Allows only valid email addresses
+- **Url**: Allows only valid URLs (starting with http/https)
+
+##### Numeric Validators
+
+- **Range**: Number must be between min and max values
+  Supports: `int`, `long`, `short`, `byte`, `sbyte`, `uint`, `ulong`, `ushort`, `float`, `double`
+
+Example usage:
 ```csharp
-[Get("/api/search")]
-public static Result Search(string q, int limit = 20, bool includeInactive = false) => Ok();
+[Get("/search")]
+public static Result Search(
+    [MinLength(3)] string query,
+    [Range(1, 100)] int limit = 20,
+    [EmailAddress] string userEmail)
+{
+    // Code only executes if all validations pass
+    return Ok().Json(PerformSearch(query, limit, userEmail));
+}
 ```
 
-Parameters with default values are optional.
-
-#### Request Body
-
-Currently limited to raw byte access through the `Request.Body` property. Future versions may include content-type handling.
+Through code generation, validation happens at compile-time, making it fast and runtime-free.
 
 ### The `Result` Class
 

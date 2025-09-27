@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Celerio.Analyzers.Generators.Validators;
 using Microsoft.CodeAnalysis;
 
 namespace Celerio.Analyzers.Generators;
@@ -23,6 +24,19 @@ public static class PropsGenerator
         return DefaultPropProvider.QueryProvider;
     }
     
+    private static List<PropProvider> GetValidators(IParameterSymbol symbol)
+    {
+        List<PropProvider> validators = new();
+        
+        foreach (var provider in PropValidators.Registry)
+            if (provider.Predicate(symbol))
+            {
+                validators.Add(provider);
+            }
+
+        return validators.OrderBy(x=>x.Complexity).ToList();
+    }
+    
     public static void GenerateProps(StringBuilder sb, List<string> pathVariables, IMethodSymbol symbol)
     {
         var props = new List<string>();
@@ -38,7 +52,14 @@ public static class PropsGenerator
             providers.Add((p,provider));
         }
 
-        providers = providers.OrderByDescending(x => x.Item2.Complexity).ToList();
+        providers = providers.OrderByDescending(x => x.Item2.Complexity).SelectMany(x =>
+        {
+            var validators = GetValidators(x.Item1).Select(y => (x.Item1, y)).ToList();
+            var p = new List<(IParameterSymbol,PropProvider)>(1+validators.Count){x};
+            p.AddRange(validators);
+            p.Reverse();
+            return p;
+        }).ToList();
 
         void EmitInvoke(StringBuilder sb, int tabs) =>
             WrappersGenerator.GenerateCall(symbol, sb, string.Join(", ", props), tabs);
