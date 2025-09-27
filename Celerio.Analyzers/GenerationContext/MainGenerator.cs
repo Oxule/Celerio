@@ -59,6 +59,7 @@ public class MainGenerator : IIncrementalGenerator
                 spc.AddSource("Router.g.cs", RouterGenerator.GenerateRouter(generationContext.Endpoints));
                 spc.AddSource("Wrappers.g.cs", WrappersGenerator.GenerateWrappers(generationContext.Endpoints));
                 spc.AddSource("Server.g.cs", ServerGenerator.GenerateServer());
+                //spc.AddSource("Entrypoint.g.cs", EntrypointGenerator.GenerateEntrypoint());
             }
             catch (Exception e)
             {
