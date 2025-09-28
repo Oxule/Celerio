@@ -11,3 +11,4 @@
 | CEL11   | Route    | Error    | Route Duplicate                  |
 | CEL12   | Route    | Warning  | Undesirable route format         |
 | CEL13   | Route    | Error    | Malformed route path variable    |
+| CEL14   | Route    | Error    | Null or empty value in route attribute |
