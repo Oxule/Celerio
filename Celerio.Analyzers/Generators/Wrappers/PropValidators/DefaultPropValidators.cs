@@ -109,12 +109,26 @@ public static class DefaultPropValidators
         x => x.Type.SpecialType == SpecialType.System_String,
         (symbol, attr) =>
         {
-            // Simple URL regex pattern
             var pattern = @"^https?://[^\s/$.?#].[^\s]*$";
             return $"Regex.IsMatch(parameter_{symbol.Name}, @\"{pattern}\")";
         },
         (symbol, attr) =>
         {
             return $"\"Parameter '{symbol.Name}' must be a valid URL\"";
+        });
+
+    public static PropProvider Validatable = new (
+        x => x.Type.AllInterfaces.Any(i => i.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::Celerio.IValidatable"),
+        0,
+        1,
+        (symbol, sb, tab, next) =>
+        {
+            var t = Tabs.Tab(tab);
+            sb.AppendLine($"{t}if (parameter_{symbol.Name}.Validate(out string? {symbol.Name}_reason)) {{");
+            if (next != null)
+                next(sb, tab + 1);
+            sb.AppendLine($"{t}}} else {{");
+            sb.AppendLine($"{t}\treturn new Result(400).Text({symbol.Name}_reason);");
+            sb.AppendLine($"{t}}}");
         });
 }

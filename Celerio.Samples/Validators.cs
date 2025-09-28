@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Celerio.Shared;
 
 namespace CelerioSamples;
 
@@ -66,5 +67,34 @@ public static class Validators
     public static Result String_Url([Url] string url)
     {
         return Ok().Text(url);
+    }
+
+    public class Person : IValidatable
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+
+        public bool Validate(out string? reason)
+        {
+            if (string.IsNullOrEmpty(Name))
+            {
+                reason = "Name cannot be empty";
+                return false;
+            }
+            if (Age < 0)
+            {
+                reason = "Age must be non-negative";
+                return false;
+            }
+
+            reason = null;
+            return true;
+        }
+    }
+
+    [Post("/validators/validatable")]
+    public static Result Validatable_Test(Person person)
+    {
+        return Ok().Text($"Name: {person.Name}, Age: {person.Age}");
     }
 }

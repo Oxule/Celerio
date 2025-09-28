@@ -19,6 +19,7 @@ public static class PropValidators
         DefaultPropValidators.DoubleRange,
         DefaultPropValidators.StringRegex,
         DefaultPropValidators.StringEmail,
-        DefaultPropValidators.StringUrl
+        DefaultPropValidators.StringUrl,
+        DefaultPropValidators.Validatable
     };
 }
