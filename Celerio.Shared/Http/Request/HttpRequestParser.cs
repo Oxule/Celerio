@@ -4,11 +4,25 @@ using System.Text;
 
 namespace Celerio;
 
+/// <summary>
+/// Parses HTTP requests from network streams, supporting HTTP/1.1 standard and chunked transfer encoding.
+/// Handles header parsing, URL decoding, query parameter extraction, and body reading.
+/// </summary>
 public static class HttpRequestParser
 {
     private const int ReadBufferSize = 64 * 1024;
     private static readonly byte[] HeaderDelimiter = new byte[] { (byte)'\r', (byte)'\n', (byte)'\r', (byte)'\n' };
 
+    /// <summary>
+    /// Asynchronously parses an HTTP request from the specified NetworkStream.
+    /// Reads and processes headers, then handles request body based on Content-Length or Transfer-Encoding headers.
+    /// Supports both standard body and chunked transfer encoding.
+    /// </summary>
+    /// <param name="ns">The NetworkStream connected to the HTTP client.</param>
+    /// <param name="cancellation">Cancellation token to cancel the parsing operation.</param>
+    /// <returns>A Request object containing the parsed HTTP request data.</returns>
+    /// <exception cref="IOException">Thrown if the connection is unexpectedly closed during parsing.</exception>
+    /// <exception cref="FormatException">Thrown if the HTTP request format is invalid.</exception>
     public static async Task<Request> ParseAsync(NetworkStream ns, CancellationToken cancellation = default)
     {
         if (ns == null) throw new ArgumentNullException(nameof(ns));

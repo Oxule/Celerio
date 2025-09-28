@@ -1,7 +1,16 @@
 ﻿namespace Celerio;
 
+/// <summary>
+/// Provides HTTP status descriptions indexed by HTTP status code.
+/// The array is indexed by numeric status code (e.g., index 200 for "OK").
+/// Codes without standard names are marked as "Unknown".
+/// </summary>
 public static class Statuses
 {
+    /// <summary>
+    /// Array of HTTP status descriptions. Indexed by status code.
+    /// For example, Status[200] returns "OK", Status[404] returns "Not Found".
+    /// </summary>
     public static string?[] Status =
     [
         "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown",
