@@ -1,31 +1,56 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
 
 /// <summary>
-/// Utility helpers to create loopback NetworkStream pairs for unit testing.
+/// Small owner object that keeps both TcpClients alive and exposes their NetworkStreams.
+/// Dispose() will clean up both sides.
+/// </summary>
+public sealed class LoopbackConnection : IDisposable
+{
+    private readonly TcpClient _client;
+    private readonly TcpClient _server;
+    private bool _disposed;
+
+    public NetworkStream ClientStream { get; }
+    public NetworkStream ServerStream { get; }
+
+    internal LoopbackConnection(TcpClient client, TcpClient server)
+    {
+        _client = client ?? throw new ArgumentNullException(nameof(client));
+        _server = server ?? throw new ArgumentNullException(nameof(server));
+
+        ClientStream = _client.GetStream();
+        ServerStream = _server.GetStream();
+
+        try { _client.NoDelay = true; _server.NoDelay = true; } catch { }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        try { ClientStream?.Dispose(); } catch { }
+        try { ServerStream?.Dispose(); } catch { }
+
+        try { _client?.Close(); _client?.Dispose(); } catch { }
+        try { _server?.Close(); _server?.Dispose(); } catch { }
+    }
+}
+
+/// <summary>
+/// Helpers to create loopback NetworkStreams for tests.
+/// Preferred usage: obtain a LoopbackConnection and dispose it when finished.
 /// </summary>
 public static class NetworkStreamTestHelper
 {
-    private static readonly List<TcpClient> _serverKeepers = new List<TcpClient>();
-
     /// <summary>
-    /// Creates a loopback connection and returns two <see cref="NetworkStream"/> instances:
-    /// the first is the client-side stream and the second is the server-side stream.
-    /// Both streams are connected to each other and can be used to simulate a real socket peer.
+    /// Create a loopback connection and return the owner object containing both streams.
+    /// Caller is responsible for disposing the returned LoopbackConnection.
     /// </summary>
-    /// <returns>
-    /// A tuple (clientStream, serverStream). Caller is responsible for disposing the returned
-    /// <see cref="NetworkStream"/> objects when they are no longer needed.
-    /// </returns>
-    /// <remarks>
-    /// The server-side <see cref="TcpClient"/> is stored internally to prevent it from being
-    /// garbage-collected and closing the connection unexpectedly during tests. Call
-    /// <see cref="CleanupKeptServers"/> after your tests to free resources.
-    /// </remarks>
-    public static (NetworkStream clientStream, NetworkStream serverStream) CreateLoopbackNetworkStreams()
+    public static LoopbackConnection CreateLoopbackConnection()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -35,80 +60,35 @@ public static class NetworkStreamTestHelper
             var acceptTask = listener.AcceptTcpClientAsync();
 
             var client = new TcpClient();
-            var localEndPoint = (IPEndPoint)listener.LocalEndpoint;
-            client.Connect(localEndPoint.Address, localEndPoint.Port);
+            var local = (IPEndPoint)listener.LocalEndpoint;
+            client.Connect(local.Address, local.Port);
 
             var server = acceptTask.GetAwaiter().GetResult();
 
             listener.Stop();
 
-            var clientStream = client.GetStream();
-            var serverStream = server.GetStream();
-
-            lock (_serverKeepers)
-            {
-                _serverKeepers.Add(server);
-            }
-
-            return (clientStream, serverStream);
+            return new LoopbackConnection(client, server);
         }
         catch
         {
-            try
-            {
-                listener.Stop();
-            }
-            catch
-            {
-            }
-
+            try { listener.Stop(); } catch { }
             throw;
         }
     }
 
     /// <summary>
-    /// Creates a loopback connection, writes the supplied bytes from the server-side stream,
-    /// and returns the client-side <see cref="NetworkStream"/> from which those bytes can be read.
+    /// Create a loopback connection, write data from the client side and return the connection.
+    /// Read the data from <see cref="LoopbackConnection.ServerStream"/>.
     /// </summary>
-    /// <param name="data">Byte array to write into the server-side stream.</param>
-    /// <returns>
-    /// A <see cref="NetworkStream"/> on the client side which contains the supplied data as if
-    /// it was sent from a remote peer.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="data"/> is null.</exception>
-    public static NetworkStream WriteNetworkStream(byte[] data)
+    public static LoopbackConnection WriteNetworkStream(byte[] data)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
 
-        var (clientStream, serverStream) = CreateLoopbackNetworkStreams();
+        var conn = CreateLoopbackConnection();
 
-        serverStream.Write(data, 0, data.Length);
-        serverStream.Flush();
+        conn.ClientStream.Write(data, 0, data.Length);
+        conn.ClientStream.Flush();
 
-        return clientStream;
-    }
-
-    /// <summary>
-    /// Releases and disposes all internally-kept server-side <see cref="TcpClient"/> instances.
-    /// Call this method after tests complete to free resources.
-    /// </summary>
-    public static void CleanupKeptServers()
-    {
-        lock (_serverKeepers)
-        {
-            foreach (var s in _serverKeepers)
-            {
-                try
-                {
-                    s.Close();
-                    s.Dispose();
-                }
-                catch
-                {
-                }
-            }
-
-            _serverKeepers.Clear();
-        }
+        return conn;
     }
 }

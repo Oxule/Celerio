@@ -40,9 +40,9 @@ public class HttpRequestParserTests {
     public async Task ParseAsync_ValidGetRequest_NoBody_Success()
     {
         const string requestData = "GET /path HTTP/1.1\r\nHost: example.com\r\n\r\n";
-        using var ns = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
+        using var conn = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
 
-        var request = await HttpRequestParser.ParseAsync(ns);
+        var request = await HttpRequestParser.ParseAsync(conn.ServerStream);
 
         Assert.Equal("GET", request.Method);
         Assert.Equal("/path", request.Path);
@@ -55,9 +55,9 @@ public class HttpRequestParserTests {
     {
         const string body = "test body data";
         var requestData = $"POST /submit HTTP/1.1\r\nHost: example.com\r\nContent-Length: {body.Length}\r\n\r\n{body}";
-        using var ns = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
+        using var conn = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
 
-        var request = await HttpRequestParser.ParseAsync(ns);
+        var request = await HttpRequestParser.ParseAsync(conn.ServerStream);
 
         Assert.Equal("POST", request.Method);
         Assert.Equal("/submit", request.Path);
@@ -72,9 +72,9 @@ public class HttpRequestParserTests {
         var chunk2 = " in\r\n\r\nchunks.";
         var chunkedData = $"POST /test HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n" +
                           $"{chunk1.Length:X}\r\n{chunk1}\r\n{chunk2.Length:X}\r\n{chunk2}\r\n0\r\n\r\n";
-        using var ns = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(chunkedData));
+        using var conn = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(chunkedData));
 
-        var request = await HttpRequestParser.ParseAsync(ns);
+        var request = await HttpRequestParser.ParseAsync(conn.ServerStream);
 
         Assert.Equal("POST", request.Method);
         Assert.Equal("/test", request.Path);
@@ -87,8 +87,8 @@ public class HttpRequestParserTests {
         const string requestData = "";
         Assert.ThrowsAsync<FormatException>(async () =>
         {
-            using var ns = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
-            await HttpRequestParser.ParseAsync(ns);
+            using var conn = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
+            await HttpRequestParser.ParseAsync(conn.ServerStream);
         });
     }
 
@@ -386,8 +386,8 @@ public class HttpRequestParserTests {
         foreach (var method in methods)
         {
             var requestData = $"{method} /path HTTP/1.1\r\nHost: example.com\r\n\r\n";
-            using var ns = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
-            var request = await HttpRequestParser.ParseAsync(ns);
+            using var conn = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(requestData));
+            var request = await HttpRequestParser.ParseAsync(conn.ServerStream);
             Assert.Equal(method, request.Method);
         }
     }

@@ -228,8 +228,9 @@ public class ResultTests
     [Fact]
     public async Task WriteResultAsync_WritesCorrectHttpResponse()
     {
-        var (clientStream, serverStream) = NetworkStreamTestHelper.CreateLoopbackNetworkStreams();
-        try
+        using var conn = NetworkStreamTestHelper.CreateLoopbackConnection();
+        var clientStream = conn.ClientStream;
+        var serverStream = conn.ServerStream;
         {
             var result = new Result(200);
 
@@ -245,12 +246,6 @@ public class ResultTests
             Assert.Equal("Server: Celerio/2.0", lines[2]);
             Assert.Equal("Content-Length: 0", lines[3]);
             Assert.Equal("", lines[4]);
-        }
-        finally
-        {
-            clientStream.Dispose();
-            serverStream.Dispose();
-            NetworkStreamTestHelper.CleanupKeptServers();
         }
     }
 }
