@@ -140,7 +140,7 @@ public class HeaderCollection : IEnumerable<KeyValuePair<string,string>>
 
     /// <summary>
     /// Asynchronously writes all active header entries to the specified StreamWriter in HTTP header format.
-    /// Each header is written as "Name: Value" followed by a newline.
+    /// Each header is written as "Name: Value" followed by \r\n as per HTTP specification.
     /// </summary>
     /// <param name="writer">The StreamWriter to write the headers to.</param>
     /// <returns>A Task representing the asynchronous write operation.</returns>
@@ -148,6 +148,6 @@ public class HeaderCollection : IEnumerable<KeyValuePair<string,string>>
     {
         foreach (var e in _entries)
             if (e.Name != null)
-                await writer.WriteLineAsync($"{e.Name}: {e.Value}");
+                await writer.WriteAsync($"{e.Name}: {e.Value}\r\n");
     }
 }
