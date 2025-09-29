@@ -1,93 +1,57 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
+using System.Buffers.Text;
+using System.Globalization;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Celerio;
-
-/// <summary>
-/// Parses HTTP requests from network streams, supporting HTTP/1.1 standard and chunked transfer encoding.
-/// Handles header parsing, URL decoding, query parameter extraction, and body reading.
-/// </summary>
-public static class HttpRequestParser
+namespace Celerio
 {
-    private const int ReadBufferSize = 64 * 1024;
-    private static readonly byte[] HeaderDelimiter = new byte[] { (byte)'\r', (byte)'\n', (byte)'\r', (byte)'\n' };
-
     /// <summary>
-    /// Asynchronously parses an HTTP request from the specified NetworkStream.
-    /// Reads and processes headers, then handles request body based on Content-Length or Transfer-Encoding headers.
-    /// Supports both standard body and chunked transfer encoding.
+    /// High-performance HTTP/1.1 request parser.
     /// </summary>
-    /// <param name="ns">The NetworkStream connected to the HTTP client.</param>
-    /// <param name="cancellation">Cancellation token to cancel the parsing operation.</param>
-    /// <returns>A Request object containing the parsed HTTP request data.</returns>
-    /// <exception cref="IOException">Thrown if the connection is unexpectedly closed during parsing.</exception>
-    /// <exception cref="FormatException">Thrown if the HTTP request format is invalid.</exception>
-    public static async Task<Request> ParseAsync(NetworkStream ns, CancellationToken cancellation = default)
+    public static class HttpRequestParser
     {
-        if (ns == null) throw new ArgumentNullException(nameof(ns));
-        if (!ns.CanRead) throw new ArgumentException("NetworkStream is not readable", nameof(ns));
+        private const int ReadBufferSize = 64 * 1024;
+        private const int LineInitialBuffer = 256;
+        private const int ChunkTempBuffer = 16 * 1024; // read chunk-data in 16KB slices
 
-        var ms = new MemoryStream();
-        var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
-        int totalRead = 0;
-        int headerEndIndex = -1;
-        try
+        public static async Task<Request> ParseAsync(NetworkStream ns, CancellationToken cancellation = default)
         {
+            if (ns == null) throw new ArgumentNullException(nameof(ns));
+            if (!ns.CanRead) throw new ArgumentException("NetworkStream is not readable", nameof(ns));
+
+            var reader = new BufferedSpanReader(ns, ReadBufferSize);
+
+            string requestLine = await reader.ReadLineStringAsync(cancellation).ConfigureAwait(false)
+                                 ?? throw new IOException("Connection closed while reading request line");
+            var parts = SplitRequestLine(requestLine);
+            if (parts.Length < 3) throw new FormatException("Malformed request line");
+            string method = parts[0];
+            string requestTarget = parts[1];
+            string httpVersion = parts[2];
+
+            // Headers
+            var headers = new HeaderCollection();
             while (true)
             {
-                cancellation.ThrowIfCancellationRequested();
-                int read = await ns.ReadAsync(buffer, 0, ReadBufferSize, cancellation).ConfigureAwait(false);
-                if (read == 0)
-                {
-                    throw new IOException("Connection closed while reading headers");
-                }
+                string headerLine = await reader.ReadLineStringAsync(cancellation).ConfigureAwait(false)
+                                    ?? throw new IOException("Connection closed while reading headers");
+                if (headerLine.Length == 0) break; // end of headers
 
-                ms.Write(buffer, 0, read);
-                totalRead += read;
-
-                headerEndIndex = IndexOfSequence(ms.GetBuffer(), 0, totalRead, HeaderDelimiter);
-                if (headerEndIndex >= 0)
-                {
-                    break;
-                }
-
-                if (totalRead > 4 * 1024 * 1024) throw new FormatException("Headers too large");
-            }
-
-            int headerRegionLength = headerEndIndex;
-            int delimiterLength = HeaderDelimiter.Length;
-            int leftoverStart = headerEndIndex + delimiterLength;
-            int leftoverCount = totalRead - leftoverStart;
-
-            var headerBytes = new byte[headerRegionLength];
-            Array.Copy(ms.GetBuffer(), 0, headerBytes, 0, headerRegionLength);
-
-            string headerText = Encoding.ASCII.GetString(headerBytes);
-
-            var lines = headerText.Split(new[] { "\r\n" }, StringSplitOptions.None);
-            if (lines.Length == 0) throw new FormatException("Empty request");
-
-            var requestLineParts = lines[0].Split(' ');
-            if (requestLineParts.Length < 3) throw new FormatException("Malformed request line");
-            string method = requestLineParts[0];
-            string requestTarget = requestLineParts[1];
-            string httpVersion = requestLineParts[2];
-
-            var headers = new HeaderCollection();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var line = lines[i];
-                if (string.IsNullOrEmpty(line)) continue;
-                int colon = line.IndexOf(':');
+                int colon = headerLine.IndexOf(':');
                 if (colon <= 0) continue;
-                string name = line.Substring(0, colon).Trim();
-                string value = line.Substring(colon + 1).Trim();
+                string name = headerLine.Substring(0, colon).Trim();
+                string value = headerLine.Substring(colon + 1).Trim();
                 headers.Add(name, value);
             }
 
+            // Path and query
             string pathOnly;
-            Dictionary<string, string> queryDict = new Dictionary<string, string>(StringComparer.Ordinal);
+            var queryDict = new Dictionary<string, string>(StringComparer.Ordinal);
             int qIdx = requestTarget.IndexOf('?');
             if (qIdx >= 0)
             {
@@ -101,75 +65,66 @@ public static class HttpRequestParser
             }
 
             byte[] body = Array.Empty<byte>();
-            if (headers.Get("Content-Length") is string clVal && int.TryParse(clVal, out int contentLength) &&
+
+            // Content-Length (prefer exact-length path)
+            if (headers.Get("Content-Length") is string clVal &&
+                long.TryParse(clVal, NumberStyles.None, CultureInfo.InvariantCulture, out long contentLength) &&
                 contentLength > 0)
             {
-                body = new byte[contentLength];
-                if (leftoverCount > 0)
-                {
-                    Array.Copy(ms.GetBuffer(), leftoverStart, body, 0, Math.Min(leftoverCount, contentLength));
-                }
-
-                int already = Math.Min(leftoverCount, contentLength);
-                int needed = contentLength - already;
-                int destOffset = already;
-                while (needed > 0)
-                {
-                    int r = await ns.ReadAsync(buffer, 0, Math.Min(buffer.Length, needed), cancellation)
-                        .ConfigureAwait(false);
-                    if (r == 0) throw new IOException("Connection closed while reading body");
-                    Array.Copy(buffer, 0, body, destOffset, r);
-                    destOffset += r;
-                    needed -= r;
-                }
+                if (contentLength > int.MaxValue) throw new FormatException("Content-Length too large");
+                body = new byte[(int)contentLength];
+                await reader.ReadExactAsync(body, 0, (int)contentLength, cancellation).ConfigureAwait(false);
             }
-            else if (string.Equals(headers.Get("Transfer-Encoding"), "chunked", StringComparison.OrdinalIgnoreCase) ||
-                     (headers.TryGetValues("Transfer-Encoding", out var vals) && vals.Count > 0 &&
-                      vals[0].IndexOf("chunked", StringComparison.OrdinalIgnoreCase) >= 0))
+            else if (IsTransferEncodingChunked(headers))
             {
-                using var bodyMs = new MemoryStream();
-                if (leftoverCount > 0)
+                var writer = new PooledBufferWriter(ChunkTempBuffer);
+                byte[] temp = ArrayPool<byte>.Shared.Rent(ChunkTempBuffer);
+                try
                 {
-                    bodyMs.Write(ms.GetBuffer(), leftoverStart, leftoverCount);
-                }
-
-                while (true)
-                {
-                    string sizeLine = await ReadLineAsync(ns, buffer, bodyMs, cancellation).ConfigureAwait(false);
-                    if (sizeLine == null) throw new IOException("Unexpected EOF reading chunk size");
-                    int sem = sizeLine.IndexOf(';');
-                    string sizeStr = sem >= 0 ? sizeLine.Substring(0, sem) : sizeLine;
-                    if (!int.TryParse(sizeStr.Trim(), System.Globalization.NumberStyles.HexNumber, null,
-                            out int chunkSize))
-                        throw new FormatException("Invalid chunk size");
-                    if (chunkSize == 0)
+                    while (true)
                     {
-                        while (true)
+                        string sizeLine = await reader.ReadLineStringAsync(cancellation).ConfigureAwait(false)
+                                          ?? throw new IOException("Unexpected EOF reading chunk size");
+                        int sem = sizeLine.IndexOf(';');
+                        string sizeStr = sem >= 0 ? sizeLine.Substring(0, sem) : sizeLine;
+                        if (!long.TryParse(sizeStr.Trim(), NumberStyles.HexNumber, CultureInfo.InvariantCulture,
+                                out long chunkSize))
+                            throw new FormatException("Invalid chunk size");
+                        if (chunkSize < 0) throw new FormatException("Negative chunk size");
+
+                        if (chunkSize == 0)
                         {
-                            string trailer =
-                                await ReadLineAsync(ns, buffer, bodyMs, cancellation).ConfigureAwait(false);
-                            if (string.IsNullOrEmpty(trailer)) break;
+                            while (true)
+                            {
+                                string trailer = await reader.ReadLineStringAsync(cancellation).ConfigureAwait(false)
+                                                 ?? throw new IOException("Unexpected EOF reading trailer");
+                                if (trailer.Length == 0) break;
+                            }
+
+                            break;
                         }
 
-                        break;
+                        long remaining = chunkSize;
+                        while (remaining > 0)
+                        {
+                            int toRead = (int)Math.Min(temp.Length, remaining);
+                            await reader.ReadExactAsync(temp, 0, toRead, cancellation).ConfigureAwait(false);
+                            writer.Write(temp, 0, toRead);
+                            remaining -= toRead;
+                        }
+
+                        await reader.ReadExactAsync(new Memory<byte>(temp, 0, 2), cancellation).ConfigureAwait(false);
+                        if (temp[0] != (byte)'\r' || temp[1] != (byte)'\n')
+                            throw new FormatException("Invalid chunk delimiter");
                     }
 
-                    int remaining = chunkSize;
-                    var temp = ArrayPool<byte>.Shared.Rent(chunkSize);
-                    int got = 0;
-                    while (got < chunkSize)
-                    {
-                        int r = await ns.ReadAsync(temp, got, chunkSize - got, cancellation).ConfigureAwait(false);
-                        if (r == 0) throw new IOException("Unexpected EOF while reading chunk data");
-                        got += r;
-                    }
-
-                    bodyMs.Write(temp, 0, chunkSize);
-                    ArrayPool<byte>.Shared.Return(temp);
-                    await ConsumeCRLFAsync(ns, buffer, cancellation).ConfigureAwait(false);
+                    body = writer.ToArray();
                 }
-
-                body = bodyMs.ToArray();
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(temp);
+                    writer.Dispose();
+                }
             }
             else
             {
@@ -178,137 +133,294 @@ public static class HttpRequestParser
 
             return new Request(method, pathOnly, queryDict, headers, body);
         }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-            ms.Dispose();
-        }
-    }
 
-    private static int IndexOfSequence(byte[] haystack, int offset, int hayLen, byte[] needle)
-    {
-        if (needle.Length == 0) return offset;
-        int limit = hayLen - needle.Length;
-        for (int i = offset; i <= limit; i++)
+        private static bool IsTransferEncodingChunked(HeaderCollection headers)
         {
-            bool ok = true;
-            for (int j = 0; j < needle.Length; j++)
+            if (string.Equals(headers.Get("Transfer-Encoding"), "chunked", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (headers.TryGetValues("Transfer-Encoding", out var vals) && vals.Count > 0 &&
+                vals[0].IndexOf("chunked", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+            return false;
+        }
+
+        #region helpers (unchanged logic but compact)
+
+        private static string[] SplitRequestLine(string requestLine)
+        {
+            return requestLine.Split(' ');
+        }
+
+        private static void ParseQueryString(string query, Dictionary<string, string> dest)
+        {
+            if (string.IsNullOrEmpty(query)) return;
+            var parts = query.Split('&');
+            foreach (var kv in parts)
             {
-                if (haystack[i + j] != needle[j])
+                if (kv.Length == 0) continue;
+                int eq = kv.IndexOf('=');
+                string name = eq >= 0 ? kv.Substring(0, eq) : kv;
+                string value = eq >= 0 ? kv.Substring(eq + 1) : "";
+                var nameDecoded = PercentDecodeToString(Encoding.ASCII.GetBytes(name));
+                var valDecoded = PercentDecodeToString(Encoding.ASCII.GetBytes(value));
+                dest[nameDecoded] = valDecoded;
+            }
+        }
+
+        private static string PercentDecodeToString(byte[] raw)
+        {
+            if (raw == null || raw.Length == 0) return "";
+            bool hasPct = false;
+            foreach (var b in raw)
+                if (b == (byte)'%')
                 {
-                    ok = false;
+                    hasPct = true;
                     break;
                 }
-            }
 
-            if (ok) return i;
-        }
+            if (!hasPct) return Encoding.UTF8.GetString(raw);
 
-        return -1;
-    }
-
-    private static void ParseQueryString(string query, Dictionary<string, string> dest)
-    {
-        if (string.IsNullOrEmpty(query)) return;
-        var parts = query.Split('&');
-        foreach (var kv in parts)
-        {
-            if (kv.Length == 0) continue;
-            int eq = kv.IndexOf('=');
-            string name = eq >= 0 ? kv.Substring(0, eq) : kv;
-            string value = eq >= 0 ? kv.Substring(eq + 1) : "";
-            var nameDecoded = PercentDecodeToString(Encoding.ASCII.GetBytes(name));
-            var valDecoded = PercentDecodeToString(Encoding.ASCII.GetBytes(value));
-            dest[nameDecoded] = valDecoded;
-        }
-    }
-
-    private static string PercentDecodeToString(byte[] raw)
-    {
-        if (raw == null || raw.Length == 0) return "";
-        bool hasPct = false;
-        foreach (var b in raw)
-            if (b == (byte)'%')
+            var outBytes = new List<byte>(raw.Length);
+            for (int i = 0; i < raw.Length; i++)
             {
-                hasPct = true;
-                break;
-            }
-
-        if (!hasPct)
-        {
-            return Encoding.UTF8.GetString(raw);
-        }
-
-        var outBytes = new List<byte>(raw.Length);
-        for (int i = 0; i < raw.Length; i++)
-        {
-            byte c = raw[i];
-            if (c == (byte)'%')
-            {
-                if (i + 2 >= raw.Length) throw new FormatException("Invalid percent-encoding");
-                int hi = FromHexChar((char)raw[i + 1]);
-                int lo = FromHexChar((char)raw[i + 2]);
-                if (hi < 0 || lo < 0) throw new FormatException("Invalid percent-encoding hex digits");
-                byte val = (byte)((hi << 4) | lo);
-                outBytes.Add(val);
-                i += 2;
-            }
-            else
-            {
-                outBytes.Add(c);
-            }
-        }
-
-        return Encoding.UTF8.GetString(outBytes.ToArray());
-    }
-
-    private static int FromHexChar(char c)
-    {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-        return -1;
-    }
-
-    private static async Task<string> ReadLineAsync(NetworkStream ns, byte[] tempBuffer, MemoryStream initial,
-        CancellationToken cancellation)
-    {
-        var sb = new StringBuilder();
-        int pos = 0;
-        while (true)
-        {
-            int r = await ns.ReadAsync(tempBuffer, 0, tempBuffer.Length, cancellation).ConfigureAwait(false);
-            if (r == 0) return null;
-            for (int i = 0; i < r; i++)
-            {
-                byte b = tempBuffer[i];
-                if (b == (byte)'\n')
+                byte c = raw[i];
+                if (c == (byte)'%')
                 {
-                    int len = sb.Length;
-                    if (len > 0 && sb[len - 1] == '\r') sb.Length = len - 1;
-                    var remaining = Encoding.ASCII.GetString(tempBuffer, 0, i);
-                    return sb.ToString();
+                    if (i + 2 >= raw.Length) throw new FormatException("Invalid percent-encoding");
+                    int hi = FromHexChar((char)raw[i + 1]);
+                    int lo = FromHexChar((char)raw[i + 2]);
+                    if (hi < 0 || lo < 0) throw new FormatException("Invalid percent-encoding hex digits");
+                    byte val = (byte)((hi << 4) | lo);
+                    outBytes.Add(val);
+                    i += 2;
                 }
                 else
                 {
-                    sb.Append((char)b);
+                    outBytes.Add(c);
+                }
+            }
+
+            return Encoding.UTF8.GetString(outBytes.ToArray());
+        }
+
+        private static int FromHexChar(char c)
+        {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            return -1;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Minimal high-performance buffer writer backed by ArrayPool.
+        /// Similar role to ArrayBufferWriter<byte> but lightweight and portable.
+        /// Not thread-safe.
+        /// </summary>
+        private sealed class PooledBufferWriter : IDisposable
+        {
+            private byte[] _buffer;
+            private int _pos;
+
+            public PooledBufferWriter(int initialCapacity = 16 * 1024)
+            {
+                if (initialCapacity <= 0) initialCapacity = 16 * 1024;
+                _buffer = ArrayPool<byte>.Shared.Rent(initialCapacity);
+                _pos = 0;
+            }
+
+            public int WrittenCount => _pos;
+
+            public void Write(ReadOnlySpan<byte> span)
+            {
+                EnsureCapacity(_pos + span.Length);
+                span.CopyTo(new Span<byte>(_buffer, _pos, span.Length));
+                _pos += span.Length;
+            }
+
+            public void Write(byte[] src, int offset, int count)
+            {
+                if (src == null) throw new ArgumentNullException(nameof(src));
+                if ((uint)offset > (uint)src.Length || count < 0 || offset + count > src.Length)
+                    throw new ArgumentOutOfRangeException();
+                EnsureCapacity(_pos + count);
+                Buffer.BlockCopy(src, offset, _buffer, _pos, count);
+                _pos += count;
+            }
+
+            private void EnsureCapacity(int needed)
+            {
+                if (needed <= _buffer.Length) return;
+                int newSize = _buffer.Length * 2;
+                while (newSize < needed) newSize *= 2;
+                var newBuf = ArrayPool<byte>.Shared.Rent(newSize);
+                Buffer.BlockCopy(_buffer, 0, newBuf, 0, _pos);
+                ArrayPool<byte>.Shared.Return(_buffer);
+                _buffer = newBuf;
+            }
+
+            /// <summary>
+            /// Return a fresh array containing written data (allocates).
+            /// </summary>
+            public byte[] ToArray()
+            {
+                var result = new byte[_pos];
+                Buffer.BlockCopy(_buffer, 0, result, 0, _pos);
+                return result;
+            }
+
+            public void Dispose()
+            {
+                if (_buffer != null)
+                {
+                    ArrayPool<byte>.Shared.Return(_buffer);
+                    _buffer = null!;
+                    _pos = 0;
                 }
             }
         }
-    }
 
-    private static async Task ConsumeCRLFAsync(NetworkStream ns, byte[] buffer, CancellationToken cancellation)
-    {
-        int need = 2;
-        int got = 0;
-        while (got < need)
+        /// <summary>
+        /// Buffered reader optimized with Span.IndexOf and pooled line buffer.
+        /// Provides ReadLineStringAsync (returns ASCII string without CRLF) and ReadExact variants.
+        /// </summary>
+        private sealed class BufferedSpanReader
         {
-            int r = await ns.ReadAsync(buffer, got, need - got, cancellation).ConfigureAwait(false);
-            if (r == 0) throw new IOException("Unexpected EOF while reading CRLF");
-            got += r;
-        }
+            private readonly Stream _stream;
+            private readonly byte[] _buffer;
+            private int _pos;
+            private int _len;
 
-        if (buffer[0] != (byte)'\r' || buffer[1] != (byte)'\n')
-            throw new FormatException("Invalid chunk delimiter");
+            public BufferedSpanReader(Stream stream, int bufferSize = 8192)
+            {
+                _stream = stream ?? throw new ArgumentNullException(nameof(stream));
+                _buffer = new byte[Math.Max(512, bufferSize)];
+                _pos = 0;
+                _len = 0;
+            }
+
+            private async ValueTask<int> FillAsync(CancellationToken cancellation)
+            {
+                if (_pos < _len) return _len - _pos;
+                _len = await _stream.ReadAsync(_buffer, 0, _buffer.Length, cancellation).ConfigureAwait(false);
+                _pos = 0;
+                return _len;
+            }
+
+            /// <summary>
+            /// Read a line and return as ASCII string (without CRLF). Uses pooled buffer, minimal copies.
+            /// </summary>
+            public async Task<string> ReadLineStringAsync(CancellationToken cancellation)
+            {
+                byte[] lineBuf = ArrayPool<byte>.Shared.Rent(LineInitialBuffer);
+                int write = 0;
+                try
+                {
+                    while (true)
+                    {
+                        int available = await FillAsync(cancellation).ConfigureAwait(false);
+                        if (available == 0)
+                        {
+                            if (write == 0) return null;
+                            break;
+                        }
+
+                        var span = new ReadOnlySpan<byte>(_buffer, _pos, available);
+                        int idx = span.IndexOf((byte)'\n');
+                        if (idx == -1)
+                        {
+                            EnsureCapacity(ref lineBuf, write + available);
+                            span.CopyTo(new Span<byte>(lineBuf, write, available));
+                            write += available;
+                            _pos = _len;
+                            continue;
+                        }
+
+                        int segLen = idx;
+                        int copyLen = segLen;
+                        if (segLen > 0 && span[segLen - 1] == (byte)'\r') copyLen = segLen - 1;
+
+                        EnsureCapacity(ref lineBuf, write + copyLen);
+                        new ReadOnlySpan<byte>(_buffer, _pos, copyLen).CopyTo(new Span<byte>(lineBuf, write, copyLen));
+                        write += copyLen;
+
+                        _pos += idx + 1;
+                        break;
+                    }
+
+                    return Encoding.ASCII.GetString(lineBuf, 0, write);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(lineBuf);
+                }
+            }
+
+            /// <summary>
+            /// Read exactly count bytes into dest[offset..offset+count) or throw IOException.
+            /// </summary>
+            public async Task ReadExactAsync(byte[] dest, int offset, int count, CancellationToken cancellation)
+            {
+                if (dest == null) throw new ArgumentNullException(nameof(dest));
+                if (offset < 0 || count < 0 || offset + count > dest.Length) throw new ArgumentOutOfRangeException();
+
+                while (count > 0)
+                {
+                    int available = _len - _pos;
+                    if (available == 0)
+                    {
+                        _len = await _stream.ReadAsync(_buffer, 0, _buffer.Length, cancellation).ConfigureAwait(false);
+                        _pos = 0;
+                        if (_len == 0) throw new IOException("Unexpected EOF while reading exact bytes");
+                        available = _len;
+                    }
+
+                    int take = Math.Min(available, count);
+                    new ReadOnlySpan<byte>(_buffer, _pos, take).CopyTo(new Span<byte>(dest, offset, take));
+                    _pos += take;
+                    offset += take;
+                    count -= take;
+                }
+            }
+
+            /// <summary>
+            /// Read exactly dest.Length bytes into provided Memory<byte> or throw IOException.
+            /// Memory<byte> is safe across await boundaries.
+            /// </summary>
+            public async Task ReadExactAsync(Memory<byte> dest, CancellationToken cancellation)
+            {
+                int offset = 0;
+                int count = dest.Length;
+                while (count > 0)
+                {
+                    int available = _len - _pos;
+                    if (available == 0)
+                    {
+                        _len = await _stream.ReadAsync(_buffer, 0, _buffer.Length, cancellation).ConfigureAwait(false);
+                        _pos = 0;
+                        if (_len == 0) throw new IOException("Unexpected EOF while reading exact bytes");
+                        available = _len;
+                    }
+
+                    int take = Math.Min(available, count);
+                    new ReadOnlySpan<byte>(_buffer, _pos, take).CopyTo(dest.Span.Slice(offset, take));
+                    _pos += take;
+                    offset += take;
+                    count -= take;
+                }
+            }
+
+            private static void EnsureCapacity(ref byte[] arr, int needed)
+            {
+                if (arr.Length >= needed) return;
+                int newSize = arr.Length * 2;
+                while (newSize < needed) newSize *= 2;
+                byte[] newArr = ArrayPool<byte>.Shared.Rent(newSize);
+                Buffer.BlockCopy(arr, 0, newArr, 0, arr.Length);
+                ArrayPool<byte>.Shared.Return(arr);
+                arr = newArr;
+            }
+        }
     }
 }

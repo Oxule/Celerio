@@ -65,6 +65,23 @@ public class HttpRequestParserTests {
     }
 
     [Fact]
+    public async Task ParseAsync_PostChunked_Success()
+    {
+        const string body = "Wikipedia in\r\n\r\nchunks.";
+        var chunk1 = "Wikipedia";
+        var chunk2 = " in\r\n\r\nchunks.";
+        var chunkedData = $"POST /test HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n" +
+                          $"{chunk1.Length:X}\r\n{chunk1}\r\n{chunk2.Length:X}\r\n{chunk2}\r\n0\r\n\r\n";
+        using var ns = NetworkStreamTestHelper.WriteNetworkStream(Encoding.ASCII.GetBytes(chunkedData));
+
+        var request = await HttpRequestParser.ParseAsync(ns);
+
+        Assert.Equal("POST", request.Method);
+        Assert.Equal("/test", request.Path);
+        Assert.Equal(body, Encoding.UTF8.GetString(request.Body));
+    }
+
+    [Fact]
     public void ParseAsync_EmptyRequest_ThrowsFormatException()
     {
         const string requestData = "";
@@ -212,12 +229,70 @@ public class HttpRequestParserTests {
     }
 
     [Fact]
+    public void ParseAsync_PostChunkedWithInvalidChunkSize_ThrowsFormatException()
+    {
+        var requestData = $"POST /test HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nINVALID\r\nchunk\r\n0\r\n\r\n";
+        Assert.ThrowsAsync<FormatException>(async () =>
+        {
+            var (server, client) = await CreateServerClientWithData(requestData);
+            using var ns = (NetworkStream)server.GetStream();
+            using var _client = client;
+            using var _server = server;
+            await HttpRequestParser.ParseAsync(ns);
+        });
+    }
+
+    [Fact]
+    public async Task ParseAsync_PostChunkedWithTrailers_Success()
+    {
+        const string body = "test data";
+        var requestData = $"POST /test HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n{body.Length:X}\r\n{body}\r\n0\r\nTrailer: value\r\n\r\n";
+        var (server, client) = await CreateServerClientWithData(requestData);
+        using var ns = (NetworkStream)server.GetStream();
+        using var _client = client;
+        using var _server = server;
+
+        var request = await HttpRequestParser.ParseAsync(ns);
+
+        Assert.Equal(body, Encoding.UTF8.GetString(request.Body));
+    }
+
+    [Fact]
+    public async Task ParseAsync_PostChunkedWithZeroChunk_Success()
+    {
+        var requestData = $"POST /test HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n";
+        var (server, client) = await CreateServerClientWithData(requestData);
+        using var ns = (NetworkStream)server.GetStream();
+        using var _client = client;
+        using var _server = server;
+
+        var request = await HttpRequestParser.ParseAsync(ns);
+
+        Assert.Equal(0, request.Body.Length);
+    }
+
+    [Fact]
     public async Task ParseAsync_PostWithLeftoverFromHeaders_Success()
     {
         const string body = "0123456789abcdef";
         var requestData = $"POST /test HTTP/1.1\r\nContent-Length: {body.Length}\r\n\r\n0123"; // Leftover 4 bytes
         var extendedData = "456789abcdef"; // Additional data to simulate network
         var (server, client) = await CreateServerClientWithData(requestData.Replace("0123", body));
+        using var ns = (NetworkStream)server.GetStream();
+        using var _client = client;
+        using var _server = server;
+
+        var request = await HttpRequestParser.ParseAsync(ns);
+
+        Assert.Equal(body, Encoding.UTF8.GetString(request.Body));
+    }
+
+    [Fact]
+    public async Task ParseAsync_PostWithMultipleTransferEncodingChunked_Success()
+    {
+        const string body = "data";
+        var requestData = $"POST /test HTTP/1.1\r\nTransfer-Encoding: gzip, chunked\r\n\r\n{body.Length:X}\r\n{body}\r\n0\r\n\r\n";
+        var (server, client) = await CreateServerClientWithData(requestData);
         using var ns = (NetworkStream)server.GetStream();
         using var _client = client;
         using var _server = server;
@@ -591,6 +666,28 @@ public class HttpRequestParserTests {
             await HttpRequestParser.ParseAsync(ns);
         });
     }
+
+    [Fact]
+    public async Task ParseAsync_PostChunkedCaseInsensitive_Success()
+    {
+        const string body = "data";
+        var requestData = $"POST /test HTTP/1.1\r\ntransfer-encoding: CHUNKED\r\n\r\n{body.Length:X}\r\n{body}\r\n0\r\n\r\n";
+        var (server, client) = await CreateServerClientWithData(requestData);
+        using var ns = (NetworkStream)server.GetStream();
+        var request = await HttpRequestParser.ParseAsync(ns);
+        Assert.Equal(body, Encoding.UTF8.GetString(request.Body));
+    }
+
+    [Fact]
+    public async Task ParseAsync_PostChunkedWithSemicolon_NoValue_Success()
+    {
+        const string body = "data";
+        var requestData = $"POST /test HTTP/1.1\r\nTransfer-Encoding: chunked;\r\n\r\n{body.Length:X};comment\r\n{body}\r\n0\r\n\r\n";
+        var (server, client) = await CreateServerClientWithData(requestData);
+        using var ns = (NetworkStream)server.GetStream();
+        var request = await HttpRequestParser.ParseAsync(ns);
+        Assert.Equal(body, Encoding.UTF8.GetString(request.Body));
+    }
     
     [Fact]
     public async Task ParseAsync_QueryWithPercentEncoded_Name_Success()
@@ -664,5 +761,16 @@ public class HttpRequestParserTests {
         using var ns = (NetworkStream)server.GetStream();
         var request = await HttpRequestParser.ParseAsync(ns);
         Assert.Equal("/path", request.Path);
+    }
+
+    [Fact]
+    public async Task ParseAsync_PostChunkedWithUpperHex_Success()
+    {
+        const string body = "test";
+        var requestData = $"POST /test HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n{body.Length:X}\r\n{body}\r\n0\r\n\r\n"; // Upper case hex
+        var (server, client) = await CreateServerClientWithData(requestData);
+        using var ns = (NetworkStream)server.GetStream();
+        var request = await HttpRequestParser.ParseAsync(ns);
+        Assert.Equal(body, Encoding.UTF8.GetString(request.Body));
     }
 }
