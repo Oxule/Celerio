@@ -18,5 +18,7 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Run tests
+    - name: Run Shared tests
       run: dotnet test Celerio.Shared.Tests/Celerio.Shared.Tests.csproj --no-build --verbosity normal
+    - name: Run Analyzers tests
+      run: dotnet test Celerio.Analyzers.Tests/Celerio.Analyzers.Tests.csproj --no-build --verbosity normal
