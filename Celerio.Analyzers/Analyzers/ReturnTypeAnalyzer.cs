@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Celerio.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class ReturnTypeAnalyzerAnalyzer : DiagnosticAnalyzer
+public class ReturnTypeAnalyzer : DiagnosticAnalyzer
 {
     private static readonly DiagnosticDescriptor UnsupportedReturnTypeRule =
         new DiagnosticDescriptor(

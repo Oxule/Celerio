@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Shared", "Celerio.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Shared.Tests", "Celerio.Shared.Tests\Celerio.Shared.Tests.csproj", "{F76014C6-1974-4E87-A056-4D7BF32D5F86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celerio.Analyzers.Tests", "Celerio.Analyzers.Tests\Celerio.Analyzers.Tests.csproj", "{A1234567-89AB-CDEF-0123-456789ABCDEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,5 +40,9 @@ Global
 		{F76014C6-1974-4E87-A056-4D7BF32D5F86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F76014C6-1974-4E87-A056-4D7BF32D5F86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F76014C6-1974-4E87-A056-4D7BF32D5F86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1234567-89AB-CDEF-0123-456789ABCDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1234567-89AB-CDEF-0123-456789ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1234567-89AB-CDEF-0123-456789ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1234567-89AB-CDEF-0123-456789ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
