@@ -36,6 +36,14 @@ public static class DefaultPropProvider
                         next(sb, tab+1);
                     sb.AppendLine($"{t}}}");
                 }
+                else if (symbol.Type.NullableAnnotation == NullableAnnotation.Annotated || symbol.Type.ToDisplayString().StartsWith("System.Nullable<"))
+                {
+                    sb.AppendLine($"{t}else {{");
+                    sb.AppendLine($"{t}\t{symbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {p} = null;");
+                    if(next != null)
+                        next(sb, tab+1);
+                    sb.AppendLine($"{t}}}");
+                }
                 else
                 {
                     sb.AppendLine($"{t}else {{");
@@ -79,7 +87,7 @@ public static class DefaultPropProvider
                         next(sb, tab+1);
                     sb.AppendLine($"{t}}}");
                 }
-                else if(symbol.Type.NullableAnnotation == NullableAnnotation.Annotated)
+                else if(symbol.Type.NullableAnnotation == NullableAnnotation.Annotated || symbol.Type.ToDisplayString().StartsWith("System.Nullable<"))
                 {
                     sb.AppendLine($"{t}else {{");
                     sb.AppendLine($"{t}\t{typeDisplay} {p} = null;");
