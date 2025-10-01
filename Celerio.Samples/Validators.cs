@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text;
 using System.Text.RegularExpressions;
 using Celerio.Shared;
 
@@ -10,63 +11,22 @@ using static Celerio.Result;
 
 public static class Validators
 {
-    [Get("/validators/string/length")]
-    public static Result String_Length([Length(3,8)] string a)
+    [Get("/checkUsername/{username}")]
+    public static Result CheckUsername([Length(3,32)] [RegularExpression("^[a-zA-Z0-9]+$")] string username)
     {
-        return Ok().Text(a);
-    }
-    
-    [Get("/validators/string/length/max")]
-    public static Result String_Length_Max([MaxLength(5)] string a)
-    {
-        return Ok().Text(a);
-    }
-    [Get("/validators/string/length/min")]
-    public static Result String_Length_Min([MinLength(3)] string a)
-    {
-        return Ok().Text(a);
+        return Ok().Text(username);
     }
 
-    [Get("/validators/int/range")]
-    public static Result Int_Range([Range(0, 100)] int a)
-    {
-        return Ok().Text(a.ToString());
-    }
-
-    [Get("/validators/double/range")]
-    public static Result Double_Range([Range(0.0, 100.0)] double a)
-    {
-        return Ok().Text(a.ToString());
-    }
-
-    [Get("/validators/float/range")]
-    public static Result Float_Range([Range(0.0f, 100.0f)] float a)
-    {
-        return Ok().Text(a.ToString());
-    }
-
-    [Get("/validators/long/range")]
-    public static Result Long_Range([Range(0L, 1000000L)] long a)
-    {
-        return Ok().Text(a.ToString());
-    }
-
-    [Get("/validators/string/regex")]
-    public static Result String_Regex([RegularExpression("^[0-9]{3}-[0-9]{3}-[0-9]{4}$")] string phone)
-    {
-        return Ok().Text(phone);
-    }
-
-    [Get("/validators/string/email")]
-    public static Result String_Email([EmailAddress] string email)
+    [Get("/email")]
+    public static Result Email([EmailAddress] string email)
     {
         return Ok().Text(email);
     }
-
-    [Get("/validators/string/url")]
-    public static Result String_Url([Url] string url)
+    
+    [Get("/url")]
+    public static Result Url([Url] string url)
     {
-        return Ok().Text(url);
+        return TemporaryRedirect(url);
     }
 
     public class Person : IValidatable
@@ -87,13 +47,19 @@ public static class Validators
                 return false;
             }
 
+            if (Age < 18)
+            {
+                reason = "Person must be adult";
+                return false;
+            }
+
             reason = null;
             return true;
         }
     }
 
     [Post("/validators/validatable")]
-    public static Result Validatable_Test(Person person)
+    public static Result Person_Validation(Person person)
     {
         return Ok().Text($"Name: {person.Name}, Age: {person.Age}");
     }
