@@ -53,6 +53,9 @@ public class MainGenerator : IIncrementalGenerator
             generationContext.Types = new (types.ToList());
 
             var sb = new StringBuilder();
+
+            sb.AppendLine($"//Generated at {DateTime.Now}");
+            sb.AppendLine();
             
             try
             {

@@ -104,7 +104,7 @@ public static class RouterGenerator
             {
                 sb.AppendLine($"{t}int pointer_{node.ParameterName} = {p};");
                 sb.AppendLine(
-                    $"{t}for (; pointer_{node.ParameterName} <= path.Length; pointer_{node.ParameterName}++) {{");
+                    $"{t}for (; pointer_{node.ParameterName} < path.Length; pointer_{node.ParameterName}++) {{");
                 sb.AppendLine($"{t}\tif({string.Join(" || ", stoppers)}) {{");
                 sb.AppendLine($"{t}\t\tbreak;");
                 sb.AppendLine($"{t}\t}}");
